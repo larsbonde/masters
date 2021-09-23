@@ -10,7 +10,7 @@ from torch_geometric.data import Dataset
 
 class ProteinDataset(Dataset):
     """
-    Variation of torch_geometric.data.Dataset. Uses a fork of bio.PDB, namely kmbio.PDB.
+    Variation of torch_geometric.data.Dataset.
     
     Provides a framework for data handling and pre-processing pipeline. Pre-processing 
     is mainly performed using kmbio.PDB for PDB file handling and proteinsolver utility-
@@ -52,12 +52,12 @@ class ProteinDataset(Dataset):
             # Read data from raw_path and process
             structure_all = kmbio.PDB.load(raw_file)
             structure_all = merge_chains(structure_all)
-            structure = kmbio.PDB.Structure(test_id, structure_all[0].extract('A'))
+            structure = kmbio.PDB.Structure(i, structure_all[0].extract('A'))
 
             pdata = proteinsolver.utils.extract_seq_and_adj(structure, 'A', remove_hetatms=True)
             data = proteinsolver.datasets.row_to_data(pdata)
             data = proteinsolver.datasets.transform_edge_attr(data)  # ?
-            data.y = target
+            data.y = torch.Tensor(target)
 
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
@@ -112,15 +112,14 @@ def get_metadata(path):
     return metadata
 
 
-def get_data(root, metadata="train_data_gene_names.csv", model="model_TCR-pMHC.pdb"):
-    metadata = get_metadata(f"{root}/{metadata}")
+def get_data(model_dir, model_name, metadata):
+    metadata = get_metadata(metadata)
     
-    model_dir = f"{root}/models/"
     target_list = list()
     path_list = list()
     for model_subdir in os.listdir(model_dir):  # iterate over and collect each model
         model_id = model_subdir.split("_")[0]
-        path = f"{model_dir}/{model_subdir}/{model}"
+        path = f"{model_dir}/{model_subdir}/{model_name}"
         try:
             if os.path.isfile(path):
                 path_list.append(path)
@@ -129,7 +128,6 @@ def get_data(root, metadata="train_data_gene_names.csv", model="model_TCR-pMHC.p
             else:
                 raise FileNotFoundError("File not found")
         except FileNotFoundError as err:
-            pass
             print(f"{err}: {path}")
 
     return np.array(path_list), np.array(target_list)
