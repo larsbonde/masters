@@ -12,6 +12,8 @@ from torch.nn.modules.container import ModuleList
 from torch_geometric.nn.inits import reset
 from torch_geometric.utils import scatter_, to_dense_adj
 
+# From https://gitlab.com/elaspic/elaspic2/-/tree/master/src/elaspic2/plugins/proteinsolver/data/ps_191f05de
+
 
 class EdgeConvMod(torch.nn.Module):
     def __init__(self, nn, aggr="max"):
@@ -24,7 +26,7 @@ class EdgeConvMod(torch.nn.Module):
         reset(self.nn)
 
     def forward(self, x, edge_index, edge_attr=None):
-        """"""
+        """ """
         row, col = edge_index
         x = x.unsqueeze(-1) if x.dim() == 1 else x
 
@@ -71,7 +73,6 @@ class EdgeConvBatch(nn.Module):
 
 def get_graph_conv_layer(input_size, hidden_size, output_size):
     mlp = nn.Sequential(
-        #
         nn.Linear(input_size, hidden_size),
         nn.ReLU(),
         nn.Linear(hidden_size, output_size),
@@ -85,7 +86,6 @@ class MyEdgeConv(torch.nn.Module):
     def __init__(self, hidden_size):
         super().__init__()
         self.nn = nn.Sequential(
-            #
             nn.Linear(hidden_size * 3, hidden_size * 2),
             nn.ReLU(),
             nn.Linear(hidden_size * 2, hidden_size),
@@ -96,7 +96,7 @@ class MyEdgeConv(torch.nn.Module):
         reset(self.nn)
 
     def forward(self, x, edge_index, edge_attr=None):
-        """"""
+        """ """
         row, col = edge_index
         x = x.unsqueeze(-1) if x.dim() == 1 else x
 
@@ -123,7 +123,7 @@ class MyAttn(torch.nn.Module):
         reset(self.attn)
 
     def forward(self, x, edge_index, edge_attr, batch):
-        """"""
+        """ """
         query = x.unsqueeze(0)
         key = to_dense_adj(edge_index, batch=batch, edge_attr=edge_attr).squeeze(0)
 
@@ -188,7 +188,9 @@ class Net(nn.Module):
 
         x_out, edge_attr_out = self.graph_conv_0(x, edge_index, edge_attr)
         x = x + x_out
-        edge_attr = (edge_attr + edge_attr_out) if edge_attr is not None else edge_attr_out
+        edge_attr = (
+            (edge_attr + edge_attr_out) if edge_attr is not None else edge_attr_out
+        )
 
         for i in range(3):
             x = F.relu(x)
@@ -223,7 +225,9 @@ class Stats:
     num_preds_missing_valid: int
     start_time: float
 
-    def __init__(self, *, epoch=0, step=0, batch_size=1, filename=None, echo=True, tb_writer=None):
+    def __init__(
+        self, *, epoch=0, step=0, batch_size=1, filename=None, echo=True, tb_writer=None
+    ):
         self.epoch = epoch
         self.step = step
         self.batch_size = batch_size
@@ -233,7 +237,9 @@ class Stats:
 
         if filename:
             self.filehandle = open(filename, "wt", newline="")
-            self.writer = csv.DictWriter(self.filehandle, list(self.stats.keys()), dialect="unix")
+            self.writer = csv.DictWriter(
+                self.filehandle, list(self.stats.keys()), dialect="unix"
+            )
             self.writer.writeheader()
             atexit.register(self.filehandle.close)
         else:
@@ -278,7 +284,11 @@ class Stats:
 
     @property
     def accuracy_mv(self):
-        return np.float64(1) * self.num_correct_preds_missing_valid / self.num_preds_missing_valid
+        return (
+            np.float64(1)
+            * self.num_correct_preds_missing_valid
+            / self.num_preds_missing_valid
+        )
 
     @property
     def datapoint(self):
