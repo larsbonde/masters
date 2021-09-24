@@ -2,6 +2,7 @@
 data/models/*
 data/train/*
 data/test/*
+data/210916_TCRpMHCmodels/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
