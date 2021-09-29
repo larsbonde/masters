@@ -1,4 +1,3 @@
-import glob
 import os
 import torch
 import numpy as np
@@ -6,9 +5,10 @@ import kmbio  # fork of biopython PDB with some changes in how the structure, ch
 import proteinsolver
 
 from torch_geometric.data import Dataset
+from pathlib import Path
 
 
-class ProteinDataset(Dataset):  # teasd
+class ProteinDataset(Dataset):
     """
     Variation of torch_geometric.data.Dataset.
 
@@ -27,23 +27,32 @@ class ProteinDataset(Dataset):  # teasd
 
     def __init__(
         self,
-        root,
+        processed_dir,
         file_names,
         targets,
         overwrite=False,
+        root=None,
         transform=None,
         pre_transform=None,
     ):
         self._raw_file_names = file_names
         self.targets = targets
-        try:
-            if not overwrite:
-                self._processed_file_names = glob.glob(f"{root}/processed/data_*.pt")
-            else:
-                raise FileNotFoundError
-        except:
+        self._overwrite = overwrite
+        self._processed_dir = processed_dir
+
+        if self._overwrite:
             self._processed_file_names = ["dummy"]
+        else:
+            n_files = len(self._raw_file_names)
+            self._processed_file_names = [
+                Path(f"{self._processed_dir}/data_{i}.pt") for i in range(n_files)
+            ]
+    
         super().__init__(root, transform, pre_transform)
+
+    @property
+    def processed_dir(self) -> str:
+        return self._processed_dir
 
     @property
     def raw_file_names(self):
@@ -54,35 +63,38 @@ class ProteinDataset(Dataset):  # teasd
         return self._processed_file_names
 
     def process(self):
+        os.makedirs(self._processed_dir, exist_ok=True)
+        processed_file_set =  set(self._processed_dir.glob("data_*"))
+        print(len(processed_file_set))
         i = 0
-        self._processed_file_names = list()
-        for raw_file, target in zip(self._raw_file_names, self.targets):
+        for raw_file, target, processed_path in zip(self._raw_file_names, self.targets, self._processed_file_names):
+            if processed_path not in processed_file_set or self._overwrite:
+                print(processed_path)
+                # Read data from raw_path and process
+                structure_all = kmbio.PDB.load(raw_file)
+                structure_all = merge_chains(structure_all)
+                structure = kmbio.PDB.Structure(i, structure_all[0].extract("A"))
 
-            # Read data from raw_path and process
-            structure_all = kmbio.PDB.load(raw_file)
-            structure_all = merge_chains(structure_all)
-            structure = kmbio.PDB.Structure(i, structure_all[0].extract("A"))
+                pdata = proteinsolver.utils.extract_seq_and_adj(
+                    structure, "A", remove_hetatms=True
+                )
+                data = proteinsolver.datasets.row_to_data(pdata)
+                data = proteinsolver.datasets.transform_edge_attr(data)  # ?
+                data.y = torch.Tensor(target)
 
-            pdata = proteinsolver.utils.extract_seq_and_adj(
-                structure, "A", remove_hetatms=True
-            )
-            data = proteinsolver.datasets.row_to_data(pdata)
-            data = proteinsolver.datasets.transform_edge_attr(data)  # ?
-            data.y = torch.Tensor(target)
+                if self.pre_transform is not None:
+                    data = self.pre_transform(data)
 
-            if self.pre_transform is not None:
-                data = self.pre_transform(data)
-
-            processed_path = f"{self.processed_dir}/data_{i}.pt"
-            torch.save(data, processed_path)
-            self._processed_file_names.append(processed_path)
+                torch.save(data, processed_path)
+            else:
+                print("skipping", i)
             i += 1
 
     def len(self):
         return len(self._processed_file_names)
 
     def get(self, idx):
-        return torch.load(f"{self.processed_dir}/data_{idx}.pt")
+        return torch.load(Path(f"{self._processed_dir}/data_{idx}.pt"))
 
 
 def merge_chains(structure, merged_chain_name="A"):
@@ -127,22 +139,17 @@ def get_metadata(path):
     return metadata
 
 
-def get_data(model_dir, model_name, metadata):
+def get_data(model_dir, metadata):
+    """
+    Loads a set of protein models for a given dir.
+    """
     metadata = get_metadata(metadata)
 
     target_list = list()
     path_list = list()
-    for model_subdir in os.listdir(model_dir):  # iterate over and collect each model
-        model_id = model_subdir.split("_")[0]
-        path = f"{model_dir}/{model_subdir}/{model_name}"
-        try:
-            if os.path.isfile(path):
-                path_list.append(path)
-                target = metadata[model_id]
-                target_list.append(target)
-            else:
-                raise FileNotFoundError("File not found")
-        except FileNotFoundError as err:
-            print(f"{err}: {path}")
-
+    for model in model_dir.glob("*"):  # iterate over and collect each model
+        path_list.append(model)
+        model_id = model.name.split("_")[0]
+        target = metadata[model_id]
+        target_list.append(target)
     return np.array(path_list), np.array(target_list)
