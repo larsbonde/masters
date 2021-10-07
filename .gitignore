@@ -3,6 +3,9 @@ data/models/*
 data/train/*
 data/test/*
 data/210916_TCRpMHCmodels/*
+data/embedding_verification/*
+data/neat_data/*
+data/state_files/embedding_verification/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

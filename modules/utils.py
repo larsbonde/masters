@@ -1,4 +1,47 @@
+import hashlib
+import numpy as np
 from IPython.display import clear_output
+
+
+def touch_output_files(root, num_folds=1):
+    """initializes training output files"""
+    new_dir = get_non_dupe_dir(root)
+    save_dir = root / new_dir
+    
+    # outdir
+    try:
+        save_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
+    except OSError as err:
+        print(f"Could not make output directory: {save_dir}. Aborting. {err}")
+    
+    # loss file
+    loss_paths = [save_dir / f"loss_{i}.pt" for i in range(num_folds)]
+    for loss_path in loss_paths:
+        loss_path.touch(mode=0o664)
+
+    # state files
+    state_paths = [save_dir / f"fold_{i}.pt" for i in range(num_folds)]
+    for fold_path in state_paths:
+        fold_path.touch(mode=0o664)
+
+    for i in range(num_folds):
+        assert loss_paths[i].exists() is True
+        assert state_paths[i].exists() is True
+    
+    return loss_paths, state_paths
+
+
+def get_non_dupe_dir(path):
+    """generates a new dir that does not exist"""
+    for i in range(10000):  # have some max limit
+        rand_int = np.int64(np.random.randint(10e5))
+        rand_hash = hashlib.md5(rand_int).hexdigest()
+        new_path = path / f"{rand_hash}"
+        if new_path.exists():
+            continue
+        else:
+            break
+    return new_path
 
 
 def print_loss(t_loss, v_loss, clear_print=False):
@@ -7,7 +50,7 @@ def print_loss(t_loss, v_loss, clear_print=False):
         clear_output(wait=True)
     i = 0
     for t, v in zip(t_loss, v_loss):
-        print(f"epoch: {i + 1} \ttrain_loss: {t:.8f} \tvalid_loss: {v:.8f}")
+        print(f"epoch: {i + 1} - train_loss: {t:.8f} - valid_loss: {v:.8f}")
         i += 1
 
 
@@ -31,7 +74,7 @@ def display_func(i, max_i, epoch, t_loss, v_loss):
     prog_white = max_white - prog_black - corr_num
     
     print(
-        f"\nepoch: {epoch + 1} n: {i}/{max_i} ", 
+        f"\nepoch: {epoch + 1} - n: {i}/{max_i} - ", 
         "[",
         prog_black * "=",
         f"{prog_val}%",

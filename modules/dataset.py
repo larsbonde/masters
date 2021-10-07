@@ -39,14 +39,11 @@ class ProteinDataset(Dataset):
         self.targets = targets
         self._overwrite = overwrite
         self._processed_dir = processed_dir
-
+        self.n_files = len(self._raw_file_names)
         if self._overwrite:
-            self._processed_file_names = ["dummy"]
+            self._processed_file_names = ["dummy"] 
         else:
-            n_files = len(self._raw_file_names)
-            self._processed_file_names = [
-                Path(f"{self._processed_dir}/data_{i}.pt") for i in range(n_files)
-            ]
+            self._processed_file_names = self.generate_file_names()
     
         super().__init__(root, transform, pre_transform)
 
@@ -62,32 +59,32 @@ class ProteinDataset(Dataset):
     def processed_file_names(self):
         return self._processed_file_names
 
+    def generate_file_names(self):
+        return [Path(f"{self._processed_dir}/data_{i}.pt") for i in range(self.n_files)]
+
     def process(self):
         os.makedirs(self._processed_dir, exist_ok=True)
-        processed_file_set =  set(self._processed_dir.glob("data_*"))
-        print(len(processed_file_set))
+        processed_file_set = set(self._processed_dir.glob("data_*"))
         i = 0
+        self._processed_file_names = self.generate_file_names()
         for raw_file, target, processed_path in zip(self._raw_file_names, self.targets, self._processed_file_names):
             if processed_path not in processed_file_set or self._overwrite:
-                print(processed_path)
                 # Read data from raw_path and process
                 structure_all = kmbio.PDB.load(raw_file)
-                structure_all = merge_chains(structure_all)
+                structure_all = merge_chains(structure_all) 
                 structure = kmbio.PDB.Structure(i, structure_all[0].extract("A"))
-
                 pdata = proteinsolver.utils.extract_seq_and_adj(
                     structure, "A", remove_hetatms=True
                 )
                 data = proteinsolver.datasets.row_to_data(pdata)
                 data = proteinsolver.datasets.transform_edge_attr(data)  # ?
-                data.y = torch.Tensor(target)
+                data.y = torch.Tensor([target])
+                data.chain_map = np.array([res.chain for res in list(structure.residues)])
 
                 if self.pre_transform is not None:
                     data = self.pre_transform(data)
 
                 torch.save(data, processed_path)
-            else:
-                print("skipping", i)
             i += 1
 
     def len(self):
@@ -113,15 +110,14 @@ def merge_chains(structure, merged_chain_name="A"):
     ]  # idx 1 is residue position
     sorted_chains = [chain for _, chain in sorted(zip(start_positions, chains))]
 
-    chain_len = 0  # constant to offset positions of residues in other chains
+    chain_pos_offset = 0  # constant to offset positions of residues in other chains
     for i, chain in enumerate(sorted_chains):
         res_list = list(chain.residues)
-        if i > 0:  # skip first chain
-            for j, res in list(enumerate(res_list))[
-                ::-1
-            ]:  # iterate in reverse to prevent duplicate idxs
-                res.id = (res.id[0], j + chain_len + 1, res.id[2])
-        chain_len += res_list[-1].id[1]
+        for j, res in list(enumerate(res_list))[::-1]:  # reverse to prevent duplicate idxs
+            if i > 0:  # skip first chain
+                res.id = (res.id[0], j + chain_pos_offset + 1, res.id[2])
+            res.chain = chain.id
+        chain_pos_offset += res_list[-1].id[1]
         new_chain.add(chain.residues)
     return new_structure
 
