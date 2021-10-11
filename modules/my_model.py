@@ -64,8 +64,8 @@ def gnn_to_lstm_batch(data, gnn_instance, device, num_classes):
 
 
 def train_model(
-    epochs, 
     model,
+    epochs,
     criterion,
     optimizer,
     train_data, 
@@ -114,3 +114,19 @@ def train_model(
         train_losses.append(train_loss / train_len)
         valid_losses.append(valid_loss / valid_len)
     return model, train_losses, valid_losses
+
+
+def predict(model, data, batch_size, device, transform=None):
+    data_loader = iter(torch_geometric.loader.DataLoader(data, batch_size=batch_size))
+    pred = list()
+    true = list()
+    with torch.no_grad():
+        for x in data_loader:
+            if transform:
+                x, y = transform(x)
+            else:
+                x, y = x.to(device), y.to(device)
+            out = model(x)
+            pred.append(F.softmax(out, dim=1))
+            true.append(y)
+    return torch.cat(pred), torch.cat(true)

@@ -3,36 +3,17 @@ import numpy as np
 from IPython.display import clear_output
 
 
-def touch_output_files(root, num_folds=1):
+def touch_output_files(save_dir, file_name_prefix, num_folds=1):
     """initializes training output files"""
-    new_dir = get_non_dupe_dir(root)
-    save_dir = root / new_dir
-    
-    # outdir
-    try:
-        save_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
-    except OSError as err:
-        print(f"Could not make output directory: {save_dir}. Aborting. {err}")
-    
-    # loss file
-    loss_paths = [save_dir / f"loss_{i}.pt" for i in range(num_folds)]
-    for loss_path in loss_paths:
-        loss_path.touch(mode=0o664)
-
-    # state files
-    state_paths = [save_dir / f"fold_{i}.pt" for i in range(num_folds)]
-    for fold_path in state_paths:
-        fold_path.touch(mode=0o664)
-
-    for i in range(num_folds):
-        assert loss_paths[i].exists() is True
-        assert state_paths[i].exists() is True
-    
-    return loss_paths, state_paths
+    file_paths = [save_dir / f"{file_name_prefix}_{i}.pt" for i in range(num_folds)]
+    for path in file_paths:
+        path.touch(mode=0o664)
+        assert path.exists() is True
+    return file_paths
 
 
 def get_non_dupe_dir(path):
-    """generates a new dir that does not exist"""
+    """makes a new dir that does not exist"""
     for i in range(10000):  # have some max limit
         rand_int = np.int64(np.random.randint(10e5))
         rand_hash = hashlib.md5(rand_int).hexdigest()
@@ -41,6 +22,13 @@ def get_non_dupe_dir(path):
             continue
         else:
             break
+
+    new_path = path / new_path
+    # outdir
+    try:
+        new_path.mkdir(mode=0o775, parents=True, exist_ok=True)
+    except OSError as err:
+        print(f"Could not make output directory: {new_path}. Aborting. {err}")
     return new_path
 
 
