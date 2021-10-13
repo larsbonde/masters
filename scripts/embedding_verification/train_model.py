@@ -1,5 +1,7 @@
+#! /usr/bin/env python3
+
 import sys
-sys.path.append('/home/sebastian/masters/') # add my repo to python path
+sys.path.append('/home/projects/ht3_aim/people/sebdel/masters/') # add my repo to python path
 import os
 import torch
 import torch_geometric
@@ -18,7 +20,7 @@ from modules.model import *
 from modules.my_model import *
 
 
-root = Path("/home/sebastian/masters/data/")
+root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
 data_root = root / "neat_data"
 metadata_path = data_root / "embedding_dataset.csv"
 processed_dir = data_root / "processed" / "embedding_verification"
@@ -68,9 +70,9 @@ criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(net.parameters(), lr=0.0001) 
 
 # training params
-epochs = 1
+epochs = 50
 n_splits = 5
-batch_size = 5
+batch_size = 32
 
 # touch files to ensure output
 save_dir = get_non_dupe_dir(out_dir)
@@ -82,8 +84,8 @@ CV = KFold(n_splits=n_splits, shuffle=True)
 i = 0
 for train_idx, valid_idx in CV.split(dataset):
     
-    train_subset = dataset[torch.LongTensor(train_idx)][0:10]
-    valid_subset = dataset[torch.LongTensor(valid_idx)][0:10]
+    train_subset = dataset[torch.LongTensor(train_idx)]
+    valid_subset = dataset[torch.LongTensor(valid_idx)]
     
     net = MyLSTM(num_classes, num_features, num_layers, hidden_size)
     net = net.to(device)

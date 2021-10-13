@@ -4,7 +4,7 @@ import sys
 import kmbio
 import numpy as np
 from pathlib import Path
-sys.path.append('/home/sebastian/masters/')
+sys.path.append('/home/projects/ht3_aim/people/sebdel/masters/')
 import modules
 from modules.dataset import *
 
@@ -20,7 +20,7 @@ class ChainFilter(kmbio.PDB.Select):
             return 0
 
 
-root = Path("/home/sebastian/masters/data/")
+root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
 data_root = root / "neat_data"
 metadata_path = data_root / "embedding_dataset.csv"
 
