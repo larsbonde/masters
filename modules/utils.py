@@ -22,9 +22,7 @@ def get_non_dupe_dir(path):
             continue
         else:
             break
-
     new_path = path / new_path
-    # outdir
     try:
         new_path.mkdir(mode=0o775, parents=True, exist_ok=True)
     except OSError as err:
