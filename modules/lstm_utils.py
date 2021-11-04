@@ -58,7 +58,7 @@ class LSTMDataset(Dataset):
         return x, y
 
 
-def pad_collate(batch, pad_val=21):
+def pad_collate(batch, pad_val=0):
     (xx, yy) = zip(*batch)
     x_lens = [len(x) for x in xx]
     y_lens = [len(y) for y in yy]
@@ -93,11 +93,11 @@ def lstm_train(
         model.train()
         j = 0
         for x, y, _, _ in train_loader:    
-            y = y.long().squeeze(1).to(device)
-            x = x.float().to(device)
+            y = y.to(device)
+            x = x.to(device)
             y_pred = model(x)
             optimizer.zero_grad()
-            loss = F.cross_entropy(y_pred, y)
+            loss = criterion(y_pred, y)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -109,10 +109,10 @@ def lstm_train(
         model.eval()
         with torch.no_grad():
             for x, y, _, _ in valid_loader:    
-                y = y.long().squeeze(1).to(device)
-                x = x.float().to(device)
+                y = y.to(device)
+                x = x.to(device)
                 y_pred = model(x)
-                loss = F.cross_entropy(y_pred, y)
+                loss = criterion(y_pred, y)
                 valid_loss += loss.item()
 
         train_losses.append(train_loss / train_len)
@@ -126,10 +126,10 @@ def lstm_predict(model, data, device):
     pred = list()
     true = list()
     with torch.no_grad():
-        for x, y, _, _ in valid_loader:    
-            y = y.long().squeeze(1).to(device)
-            x = x.float().to(device)
+        for x, y, _, _ in data_loader:    
+            y = y.to(device)
+            x = x.to(device)
             y_pred = model(x)
-            pred.append(F.softmax(y_pred, dim=1))
+            pred.append(torch.sigmoid(y_pred))
             true.append(y)
-    return pred, true
+    return torch.Tensor(pred), torch.Tensor(true)
