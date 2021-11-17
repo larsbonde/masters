@@ -1,11 +1,13 @@
 import os
 import torch
 import numpy as np
+import pandas as pd
 import kmbio  # fork of biopython PDB with some changes in how the structure, chain, etc. classes are defined.
 import proteinsolver
 
 from torch_geometric.data import Dataset
 from pathlib import Path
+from joblib import Parallel, delayed
 
 
 class ProteinDataset(Dataset):
@@ -32,12 +34,14 @@ class ProteinDataset(Dataset):
         targets,
         overwrite=False,
         root=None,
+        cores=1,
         transform=None,
         pre_transform=None,
     ):
         self._raw_file_names = file_names
         self.targets = targets
         self._overwrite = overwrite
+        self.cores = cores
         self._processed_dir = processed_dir
         self.n_files = len(self._raw_file_names)
         if self._overwrite:
@@ -63,12 +67,7 @@ class ProteinDataset(Dataset):
         return [Path(f"{self._processed_dir}/data_{i}.pt") for i in range(self.n_files)]
 
     def process(self):
-        os.makedirs(self._processed_dir, exist_ok=True)
-        processed_file_set = set(self._processed_dir.glob("data_*"))
-        i = 0
-        self._processed_file_names = self.generate_file_names()
-        for raw_file, target, processed_path in zip(self._raw_file_names, self.targets, self._processed_file_names):
-            if processed_path not in processed_file_set or self._overwrite:
+        def _sub_process(i, raw_file, target, processed_path):
                 # Read data from raw_path and process
                 structure_all = kmbio.PDB.load(raw_file)
                 structure_all = merge_chains(structure_all) 
@@ -81,11 +80,21 @@ class ProteinDataset(Dataset):
                 data.y = torch.Tensor([target])
                 data.chain_map = np.array([res.chain for res in list(structure.residues)])
 
-                if self.pre_transform is not None:
-                    data = self.pre_transform(data)
+                #if self.pre_transform is not None:
+                #    data = self.pre_transform(data)
 
                 torch.save(data, processed_path)
+        
+        os.makedirs(self._processed_dir, exist_ok=True)
+        processed_file_set = set(self._processed_dir.glob("data_*"))
+        i = 0
+        self._processed_file_names = self.generate_file_names()
+        args = list()
+        for raw_file, target, processed_path in zip(self._raw_file_names, self.targets, self._processed_file_names):
+            if processed_path not in processed_file_set or self._overwrite:
+                args.append([i, raw_file, target, processed_path])
             i += 1
+        Parallel(n_jobs=self.cores)(delayed(_sub_process)(*arg) for arg in args)
 
     def len(self):
         return len(self._processed_file_names)

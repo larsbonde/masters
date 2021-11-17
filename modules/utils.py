@@ -40,7 +40,7 @@ def print_loss(t_loss, v_loss, clear_print=False):
         i += 1
 
 
-def display_func(i, max_i, epoch, t_loss, v_loss):
+def display_func(i, max_i, epoch, t_loss, v_loss, extra_print=None):
     """Display epoch progress bar and losses of previous epochs"""
     clear_output(wait=True)
     
@@ -59,6 +59,8 @@ def display_func(i, max_i, epoch, t_loss, v_loss):
     prog_black = int(perc * max_white) - corr_num
     prog_white = max_white - prog_black - corr_num
     
+    if extra_print:
+        print(extra_print)
     print(
         f"\nepoch: {epoch + 1} - n: {i}/{max_i} - ", 
         "[",
