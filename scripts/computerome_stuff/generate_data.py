@@ -33,19 +33,19 @@ def create_gnn_embeddings(
     overwrite=False, 
     chain_keys=np.array(["P", "M", "A", "B"])
 ):  
-    def _sub_process(out_path, data, chain_keys, gnn_func):
-            data = data.to("cpu")
-            with torch.no_grad():
-                    out = gnn_func(data.x, data.edge_index, data.edge_attr)
-  
-            # add positional encoding of chains
-            positional_encoding = np.zeros((len(data.x), len(chain_keys)))
-            for j, p in enumerate(data.chain_map[0]):
-                positional_encoding[j][np.where(chain_keys == p)] = 1
-            positional_encoding = torch.Tensor(positional_encoding)
-            out = torch.cat((out, positional_encoding), dim=1)
+    def _sub_process(out_path, data, chain_keys=chain_keys, gnn_func=gnn_func):
+        #data = data.to("cpu")
+        with torch.no_grad():
+            out = gnn_func(data.x, data.edge_index, data.edge_attr)
 
-            torch.save(out, out_path)
+        # add positional encoding of chains
+        positional_encoding = np.zeros((len(data.x), len(chain_keys)))
+        for j, p in enumerate(data.chain_map[0]):
+            positional_encoding[j][np.where(chain_keys == p)] = 1
+        positional_encoding = torch.Tensor(positional_encoding)
+        out = torch.cat((out, positional_encoding), dim=1)
+
+        torch.save(out, out_path)
 
     out_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
     
@@ -59,13 +59,16 @@ def create_gnn_embeddings(
         targets.append([data.y])
     torch.save(targets, out_dir / f"targets.pt")
 
-    sub_process = lambda out_path, data: _sub_process(
-        out_path,
-        data,
-        gnn_func=gnn_func,
-        chain_keys=chain_keys,
-    )
-    Parallel(n_jobs=cores)(delayed(sub_process)(*arg) for arg in zip(out_files, data_loader))
+    #sub_process = lambda out_path, data: _sub_process(
+    #    out_path,
+    #    data,
+    #    gnn_func=gnn_func,
+    #    chain_keys=chain_keys,
+    #)
+    #args = zip(out_files, data_loader)
+    #Parallel(n_jobs=cores)(delayed(_sub_process)(*arg) for arg in args)
+    for arg in zip(out_files, data_loader):  # use instead of failed attempt at parallelizing pytorch stuff
+        _sub_process(*arg)
 
 
 # Only root needs to be changed

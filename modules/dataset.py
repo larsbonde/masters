@@ -67,23 +67,23 @@ class ProteinDataset(Dataset):
         return [Path(f"{self._processed_dir}/data_{i}.pt") for i in range(self.n_files)]
 
     def process(self):
-        def _sub_process(i, raw_file, target, processed_path):
-                # Read data from raw_path and process
-                structure_all = kmbio.PDB.load(raw_file)
-                structure_all = merge_chains(structure_all) 
-                structure = kmbio.PDB.Structure(i, structure_all[0].extract("A"))
-                pdata = proteinsolver.utils.extract_seq_and_adj(
-                    structure, "A", remove_hetatms=True
-                )
-                data = proteinsolver.datasets.row_to_data(pdata)
-                data = proteinsolver.datasets.transform_edge_attr(data)  # ?
-                data.y = torch.Tensor([target])
-                data.chain_map = np.array([res.chain for res in list(structure.residues)])
+        def _sub_process(j, raw_file, target, processed_path):
+            # Read data from raw_path and process
+            structure_all = kmbio.PDB.load(raw_file)
+            structure_all = merge_chains(structure_all) 
+            structure = kmbio.PDB.Structure(j, structure_all[0].extract("A"))
+            pdata = proteinsolver.utils.extract_seq_and_adj(
+                structure, "A", remove_hetatms=True
+            )
+            data = proteinsolver.datasets.row_to_data(pdata)
+            data = proteinsolver.datasets.transform_edge_attr(data)  # ?
+            data.y = torch.Tensor([target])
+            data.chain_map = np.array([res.chain for res in list(structure.residues)])
 
-                #if self.pre_transform is not None:
-                #    data = self.pre_transform(data)
+            #if self.pre_transform is not None:
+            #    data = self.pre_transform(data)
 
-                torch.save(data, processed_path)
+            torch.save(data, processed_path)
         
         os.makedirs(self._processed_dir, exist_ok=True)
         processed_file_set = set(self._processed_dir.glob("data_*"))
