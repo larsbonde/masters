@@ -17,7 +17,7 @@ def gnn_train(
     valid_idx,
     batch_size,
     device,
-    early_stopping=False
+    early_stopping=False,
     extra_print=None,
 ):
     train_losses = list()
