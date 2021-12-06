@@ -5,7 +5,33 @@ import torch_geometric
 from pathlib import Path
 
 
-def generate_loo_partitions(metadata):
+def filter_peptides(partition_1, partition_2, filtered_peptides, metadata):  # TODO modularize to take a single partition instead of two
+    filtered_indices = list()
+    filtered_partitions = list()
+
+    unique_peptides = metadata["peptide"].unique()
+
+    for pep in filtered_peptides:
+        filtered_indices.extend(list(metadata[metadata["peptide"] == pep].index))
+        filtered_partitions.extend(np.where(unique_peptides == pep)[0])
+
+    partition_1 = [part for i, part in enumerate(partition_1) if i not in filtered_partitions]
+    partition_2 = [part for i, part in enumerate(partition_2) if i not in filtered_partitions]
+
+    filtered_indices = set(filtered_indices)
+
+    for i in range(len(partition_1)):
+        train_part, valid_part = partition_1[i], partition_2[i]
+        train_part = [i for i in train_part if i not in filtered_indices]
+        valid_part = [i for i in valid_part if i not in filtered_indices]
+        partition_1[i], partition_2[i] = train_part, valid_part
+
+    unique_peptides = np.delete(unique_peptides, filtered_partitions)
+
+    return partition_1, partition_2, unique_peptides
+
+
+def generate_2_loo_partitions(metadata):
     """
     Generates leave-one-out partitions given a df with metadata
     """
@@ -25,31 +51,46 @@ def generate_loo_partitions(metadata):
         loo_train_partitions.append(list(train_df.index))
         loo_valid_partitions.append(list(valid_df.index))
 
-    # hacky dataset fix
-    # hacky dataset fix
-    # hacky dataset fix
-    filtered_peptides = ["CLGGLLTMV", "ILKEPVHGV"]
-    filtered_indices = list()
-    filtered_partitions = list()
-
-    for pep in filtered_peptides:
-        filtered_indices.extend(list(metadata[metadata["peptide"] == pep].index))
-        filtered_partitions.extend(np.where(unique_peptides == pep)[0])
-
-    loo_train_partitions = [part for i, part in enumerate(loo_train_partitions) if i not in filtered_partitions]
-    loo_valid_partitions = [part for i, part in enumerate(loo_valid_partitions) if i not in filtered_partitions]
-
-    filtered_indices = set(filtered_indices)
-
-    for i in range(len(loo_train_partitions)):
-        train_part, valid_part = loo_train_partitions[i], loo_valid_partitions[i]
-        train_part = [i for i in train_part if i not in filtered_indices]
-        valid_part = [i for i in valid_part if i not in filtered_indices]
-        loo_train_partitions[i], loo_valid_partitions[i] = train_part, valid_part
-
-    unique_peptides = np.delete(unique_peptides, filtered_partitions)
-    
+   # hacky dataset fix
+    loo_train_partitions, loo_valid_partitions, unique_peptides = filter_peptides(
+        loo_train_partitions, 
+        loo_valid_partitions,
+        ["CLGGLLTMV", "ILKEPVHGV"],
+        metadata,
+    )
     return loo_train_partitions, loo_valid_partitions, unique_peptides
+
+
+def generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV"):
+    """
+    Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data.
+    """
+    metadata = metadata[metadata["origin"] != "swapped"]
+    unique_peptides = metadata["peptide"].unique()
+    unique_peptides = np.delete(unique_peptides, np.where(unique_peptides == valid_pep))
+    
+    valid_df = metadata[metadata["peptide"] == valid_pep]
+    
+    loo_train_partitions = list()
+    loo_test_partitions = list()
+    
+    for pep in unique_peptides:
+        test_df = metadata[metadata["peptide"] == pep]
+        train_df = metadata[(metadata["peptide"] != pep) & (metadata["peptide"] != valid_pep)]
+
+        loo_train_partitions.append(list(train_df.index))
+        loo_test_partitions.append(list(test_df.index))
+        
+    valid_partition = list(valid_df.index)
+
+    # hacky dataset fix
+    loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
+        loo_train_partitions, 
+        loo_test_partitions,
+        ["CLGGLLTMV", "ILKEPVHGV"],
+        metadata,
+    )
+    return loo_train_partitions, loo_test_partitions, valid_partition, unique_peptides
 
 
 def create_gnn_embeddings(
