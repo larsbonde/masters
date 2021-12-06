@@ -53,7 +53,7 @@ hidden_size = 128
 
 # general params
 batch_size = 4
-epochs = 70
+epochs = 4
 learning_rate = 1e-2
 lr_decay = 1 #0.98
 w_decay = 0
@@ -76,8 +76,8 @@ for train_idx, valid_idx in zip(loo_train_partitions, loo_valid_partitions):
     )
     net = net.to(device)
 
-    gnn.load_state_dict(torch.load(state_file, map_location=device))
-    gnn.linear_out = nn.Linear(hidden_size, 1)  # rewrite final layer to 1 dim output
+    net.load_state_dict(torch.load(state_file, map_location=device))
+    net.linear_out = nn.Linear(hidden_size, 1)  # rewrite final layer to 1 dim output
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(
