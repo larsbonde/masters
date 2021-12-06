@@ -44,7 +44,7 @@ raw_files = np.array(metadata["path"])
 targets = np.array(metadata["binder"])
 dataset = ProteinDataset(processed_dir, raw_files, targets, overwrite=False)
 
-loo_train_partitions, loo_valid_partitions, unique_peptides = generate_loo_partitions(metadata)
+loo_train_partitions, loo_valid_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 # GNN params
 num_features = 20
@@ -66,7 +66,7 @@ state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
 i = 0
-for train_idx, valid_idx in zip(loo_train_partitions, loo_valid_partitions):
+for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
     
     net = MyGNN(
         x_input_size=num_features + 1, 
@@ -104,7 +104,7 @@ for train_idx, valid_idx in zip(loo_train_partitions, loo_valid_partitions):
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = gnn_predict(net, dataset, valid_idx, device)     
+    pred, true = gnn_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
     i += 1
