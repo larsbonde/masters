@@ -11,22 +11,22 @@
 #PBS -m abe
 ###
 ### Compute resources, here 1 core on 1 node
-#PBS -l nodes=1:ppn=19:gpus=1
+#PBS -l nodes=1:ppn=4
 ###
 ### Required RAM in GB
-#PBS -l mem=90GB
+#PBS -l mem=20GB
 ###
 ### How long (max) will the job take, here 24 hours
 #PBS -l walltime=30:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
-#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/embedding_verification/train_err.log
-#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/embedding_verification/train_run.log
+#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err.log
+#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run.log
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N ps_train
+#PBS -N ps_embed
 ###
 ### More qsub options can be added here
 
@@ -38,6 +38,6 @@
 module load tools 
 module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-conda activate ps
+conda activate /home/projects/ht3_aim/people/sebdel/envs/ps_gpu
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/embedding_verification/train_model.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_baseline.py

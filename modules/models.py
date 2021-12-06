@@ -269,8 +269,7 @@ class Net(nn.Module):
     def forward(self, x, edge_index, edge_attr):
         x = self.forward_without_last_layer(x, edge_index, edge_attr)
         x = self.linear_out(x)
-        return x
-        
+        return x        
 
     def forward_without_last_layer(self, x, edge_index, edge_attr):
         x = self.embed_x(x)

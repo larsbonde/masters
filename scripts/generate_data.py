@@ -113,5 +113,5 @@ dataset = ProteinDataset(processed_dir, raw_files, targets, cores=30, overwrite=
 
 # Create GNN embeddings (gnn.forward_without_last_layer=128 dim, gnn.forward=20 dim)
 gnn_func = gnn.forward_without_last_layer
-out_dir = processed_dir / "gnn_out_pos_128_test"
+out_dir = processed_dir / "gnn_out_pos_128"
 create_gnn_embeddings(dataset, out_dir, device, gnn_func, cores=30, overwrite=False)
