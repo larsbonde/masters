@@ -44,7 +44,7 @@ raw_files = np.array(metadata["path"])
 targets = np.array(metadata["binder"])
 dataset = ProteinDataset(processed_dir, raw_files, targets, overwrite=False)
 
-loo_train_partitions, loo_valid_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
+loo_train_partitions, loo_test_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 # GNN params
 num_features = 20
