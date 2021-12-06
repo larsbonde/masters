@@ -74,11 +74,8 @@ for train_idx, valid_idx in zip(loo_train_partitions, loo_valid_partitions):
         hidden_size=hidden_size, 
         output_size=num_features
     )
-    
-    #net = net.to(device)
     net.load_state_dict(torch.load(state_file, map_location=device))
-    #net.load_state_dict(torch.load(state_file))
-    net.linear_out = nn.Linear(hidden_size, 1)  # rewrite final layer to 1 dim output
+    net.linear_out = nn.Linear(hidden_size, 1)  # rewrite final layer to scalar outptu
     net = net.to(device)
 
     criterion = nn.BCEWithLogitsLoss()
