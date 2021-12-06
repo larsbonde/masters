@@ -100,6 +100,7 @@ for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
         valid_idx,
         batch_size,
         device,
+        early_stopping=True,
     )
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
