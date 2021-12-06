@@ -24,6 +24,7 @@ def gnn_train(
     valid_losses = list()
     epochs_since_last_improv = 0
     best_valid_loss = float("-inf") 
+    best_model = model.state_dict()
 
     for e in range(epochs):
         

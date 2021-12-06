@@ -29,7 +29,7 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" / "tcr_binding"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetuning"
+out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetuning_es"
 model_dir = data_root / "raw" / "tcrpmhc"
 
 paths = list(model_dir.glob("*"))
