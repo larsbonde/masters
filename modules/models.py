@@ -3,11 +3,12 @@ import copy
 import csv
 import time
 import warnings
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from .utils import *
+from .lstm_utils import*
 from torch.nn.modules.container import ModuleList
 from torch_geometric.nn.inits import reset
 from torch_geometric.utils import scatter_, to_dense_adj
@@ -15,6 +16,95 @@ from torch_geometric.utils import scatter_, to_dense_adj
 # From https://gitlab.com/elaspic/elaspic2/-/tree/master/src/elaspic2/plugins/proteinsolver/data/ps_191f05de
 
 
+class MyLSTM(nn.Module):
+    """placeholder model"""
+    def __init__(self,  num_classes, num_features, num_layers, hidden_size):
+        super(MyLSTM, self).__init__()
+        
+        self.num_layers = num_layers
+        self.hidden_size = hidden_size
+        
+        self.lstm = nn.LSTM(
+            input_size=num_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers, 
+            dropout=0.5, 
+            bidirectional=True
+        )
+        self.dropout = nn.Dropout(p=0.5)
+        self.linear = nn.Linear(hidden_size * 2, num_classes)
+        
+        torch.nn.init.xavier_uniform_(self.linear.weight)
+    
+    def forward(self, x):
+        x = nn.utils.rnn.pack_sequence(x)
+        x, (h, c) = self.lstm(x)
+        h_cat = torch.cat((h[-2, :, :], h[-1, :, :]), dim=1)
+        out = self.dropout(h_cat)
+        out = self.linear(out)
+        return out
+
+
+class QuadLSTM(nn.Module):
+    def __init__(self, embedding_dim, hidden_dim, num_layers, dropout=0.0):
+        super(QuadLSTM, self).__init__()
+        
+        self.num_layers = num_layers
+        self.hidden_dim = hidden_dim
+        self.dropout = dropout
+        
+        self.lstm_1 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+        )       
+        self.lstm_2 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+        )        
+        self.lstm_3 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout, 
+            batch_first=True,
+        )     
+        self.lstm_4 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout, 
+            batch_first=True,
+        )
+        
+        self.linear_dropout = nn.Dropout(p=dropout)
+        self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
+        self.linear_1 = nn.Linear(hidden_dim * 4, hidden_dim)
+        self.linear_2 = nn.Linear(hidden_dim, 1)
+        
+        torch.nn.init.xavier_uniform_(self.linear_1.weight)
+        torch.nn.init.xavier_uniform_(self.linear_2.weight)
+    
+    def forward(self, x_1, x_2, x_3, x_4):
+        _, (h_1, _) = self.lstm_1(x_1)
+        _, (h_2, _) = self.lstm_2(x_2)
+        _, (h_3, _) = self.lstm_3(x_3)
+        _, (h_4, _) = self.lstm_4(x_4)
+        h_cat = torch.cat((h_1[-1], h_2[-1], h_3[-1], h_4[-1]), dim=1)
+        out = self.linear_1(h_cat)
+        out = self.batch_norm(out)
+        out = F.relu(out)
+        out = self.linear_dropout(out)
+        out = self.linear_2(out)
+        return out
+
+
+# ProteinSolver stuff
 class EdgeConvMod(torch.nn.Module):
     def __init__(self, nn, aggr="max"):
         super().__init__()
@@ -200,7 +290,7 @@ class Net(nn.Module):
             x = x + x_out
             edge_attr = edge_attr + edge_attr_out
 
-        return x
+        return x#, edge_attr
 
 
 def _get_clones(module, N):
@@ -210,105 +300,3 @@ def _get_clones(module, N):
 def to_fixed_width(lst, precision=None):
     lst = [round(l, precision) if isinstance(l, float) else l for l in lst]
     return [f"{l: <18}" for l in lst]
-
-
-class Stats:
-    epoch: int
-    step: int
-    batch_size: int
-    echo: bool
-    total_loss: float
-    num_correct_preds: int
-    num_preds: int
-    num_correct_preds_missing: int
-    num_preds_missing: int
-    num_correct_preds_missing_valid: int
-    num_preds_missing_valid: int
-    start_time: float
-
-    def __init__(
-        self, *, epoch=0, step=0, batch_size=1, filename=None, echo=True, tb_writer=None
-    ):
-        self.epoch = epoch
-        self.step = step
-        self.batch_size = batch_size
-        self.echo = echo
-        self.tb_writer = tb_writer
-        self.reset_parameters()
-
-        if filename:
-            self.filehandle = open(filename, "wt", newline="")
-            self.writer = csv.DictWriter(
-                self.filehandle, list(self.stats.keys()), dialect="unix"
-            )
-            self.writer.writeheader()
-            atexit.register(self.filehandle.close)
-        else:
-            self.filehandle = None
-            self.writer = None
-
-    def reset_parameters(self):
-        self.num_steps = 0
-        self.total_loss = 0
-        self.num_correct_preds = 0
-        self.num_preds = 0
-        self.num_correct_preds_missing = 0
-        self.num_preds_missing = 0
-        self.num_correct_preds_missing_valid = 0
-        self.num_preds_missing_valid = 0
-        self.start_time = time.perf_counter()
-
-    @property
-    def header(self):
-        return "".join(to_fixed_width(self.stats.keys()))
-
-    @property
-    def row(self):
-        return "".join(to_fixed_width(self.stats.values(), 4))
-
-    @property
-    def stats(self):
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            return {
-                "epoch": self.epoch,
-                "step": self.step,
-                "datapoint": self.datapoint,
-                "avg_loss": np.float64(1) * self.total_loss / self.num_steps,
-                "accuracy": np.float64(1) * self.num_correct_preds / self.num_preds,
-                "accuracy_m": np.float64(1)
-                * self.num_correct_preds_missing
-                / self.num_preds_missing,
-                "accuracy_mv": self.accuracy_mv,
-                "time_elapsed": time.perf_counter() - self.start_time,
-            }
-
-    @property
-    def accuracy_mv(self):
-        return (
-            np.float64(1)
-            * self.num_correct_preds_missing_valid
-            / self.num_preds_missing_valid
-        )
-
-    @property
-    def datapoint(self):
-        return self.step * self.batch_size
-
-    def write_header(self):
-        if self.echo:
-            print(self.header)
-        if self.writer is not None:
-            self.writer.writeheader()
-
-    def write_row(self):
-        if self.echo:
-            print(self.row, end="\r")
-        if self.writer is not None:
-            self.writer.writerow(self.stats)
-        if self.tb_writer is not None:
-            stats = self.stats
-            datapoint = stats.pop("datapoint")
-            for key, value in stats.items():
-                self.tb_writer.add_scalar(key, value, datapoint)
-            self.tb_writer.flush()

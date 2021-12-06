@@ -7,6 +7,7 @@ data/embedding_verification/*
 data/neat_data/*
 data/state_files/embedding_verification/*
 data/state_files/tcr_binding/*
+data/state_files/tcr_binding_baseline/*
 data/saved_state_files/*
 
 # Byte-compiled / optimized / DLL files

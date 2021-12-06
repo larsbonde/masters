@@ -1,61 +1,10 @@
 import torch
 import torch.nn.functional as F
-import torch_geometric
 import numpy as np
 from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 from .utils import *
-
-
-class MyLSTM(nn.Module):
-    """placeholder model"""
-    def __init__(self,  num_classes, num_features, num_layers, hidden_size):
-        super(MyLSTM, self).__init__()
-        
-        self.num_layers = num_layers
-        self.hidden_size = hidden_size
-        
-        self.lstm = nn.LSTM(
-            input_size=num_features,
-            hidden_size=hidden_size,
-            num_layers=num_layers, 
-            dropout=0.5, 
-            bidirectional=True
-        )
-        self.dropout = nn.Dropout(p=0.5)
-        self.linear = nn.Linear(hidden_size * 2, num_classes)
-        
-        torch.nn.init.xavier_uniform_(self.linear.weight)
-    
-    def forward(self, x):
-        x = nn.utils.rnn.pack_sequence(x)
-        x, (h, c) = self.lstm(x)
-        h_cat = torch.cat((h[-2, :, :], h[-1, :, :]), dim=1)
-        out = self.dropout(h_cat)
-        out = self.linear(out)
-        return out
-
-
-class LSTMDataset(Dataset):
-    def __init__(
-        self, 
-        data_dir, 
-        annotations_path, 
-        transform=None, 
-        target_transform=None
-    ):
-        self.data_dir = data_dir
-        self.transform = transform
-        self.target_transform = target_transform
-        self.annotations = torch.Tensor(torch.load(annotations_path))
-
-    def __len__(self):
-        return len(self.annotations)
-
-    def __getitem__(self, idx):
-        x = torch.load(f"{self.data_dir}/data_{idx}.pt")
-        y = self.annotations[idx]
-        return x, y
+from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
 
 
 def pad_collate(batch, pad_val=0):
@@ -69,67 +18,93 @@ def pad_collate(batch, pad_val=0):
     return xx_pad, yy_pad, x_lens, y_lens
 
 
-def lstm_train(
+def pad_collate_chain_split(batch, pad_val=0, n_split=4):
+    (xx, yy) = zip(*batch)
+    x_split_batch = [list() for _ in range(n_split)]
+    for x in xx:
+        for i in range(n_split):
+            x_split_batch[i].append(x[x[:,-i - 1] == 1][:,:-n_split])  # slice based on positional encoding and remove encoding part
+
+    for i in range(n_split):
+        x_split_batch[i] = nn.utils.rnn.pad_sequence(
+            x_split_batch[i], 
+            batch_first=True, 
+            padding_value=pad_val
+        )
+    yy_pad = nn.utils.rnn.pad_sequence(yy, batch_first=True, padding_value=pad_val)
+    return x_split_batch, yy_pad
+
+
+def lstm_quad_train(
     model,
     epochs,
     criterion,
     optimizer,
-    train_data, 
-    valid_data,
+    scheduler,
+    dataset,
+    train_idx,
+    valid_idx,
     batch_size,
     device,
+    collate_fn=pad_collate_chain_split,
+    extra_print=None,
 ):
     train_losses = list()
     valid_losses = list()
     
     for e in range(epochs):
-        train_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True, collate_fn=pad_collate)
-        valid_loader = DataLoader(dataset=valid_data, batch_size=batch_size, shuffle=True, collate_fn=pad_collate)
+        
+        train_sampler = BatchSampler(SubsetRandomSampler(train_idx), batch_size=batch_size, drop_last=False)
+        valid_sampler = BatchSampler(SubsetRandomSampler(valid_idx), batch_size=1, drop_last=False)
+        
+        train_loader = DataLoader(dataset=dataset, batch_sampler=train_sampler, collate_fn=collate_fn)
+        valid_loader = DataLoader(dataset=dataset, batch_sampler=valid_sampler, collate_fn=collate_fn)
 
         train_len = len(train_loader)
         valid_len = len(valid_loader)
-
+        
         train_loss = 0
         model.train()
         j = 0
-        for x, y, _, _ in train_loader:    
+        for xx, y in train_loader:    
             y = y.to(device)
-            x = x.to(device)
-            y_pred = model(x)
+            xx = (x.to(device) for x in xx)
+            y_pred = model(*xx)
             optimizer.zero_grad()
             loss = criterion(y_pred, y)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
 
-            display_func(j, train_len, e, train_losses, valid_losses)
+            display_func(j, train_len, e, train_losses, valid_losses, extra_print)
             j += 1
-            
+        
         valid_loss = 0
         model.eval()
         with torch.no_grad():
-            for x, y, _, _ in valid_loader:    
+            for xx, y in valid_loader:    
                 y = y.to(device)
-                x = x.to(device)
-                y_pred = model(x)
+                xx = (x.to(device) for x in xx)
+                y_pred = model(*xx)
                 loss = criterion(y_pred, y)
                 valid_loss += loss.item()
-
+        
+        scheduler.step()
         train_losses.append(train_loss / train_len)
         valid_losses.append(valid_loss / valid_len)
 
     return model, train_losses, valid_losses
 
 
-def lstm_predict(model, data, device):
-    data_loader = DataLoader(dataset=data, batch_size=1, shuffle=False, collate_fn=pad_collate)
+def lstm_quad_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split):
+    data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
     pred = list()
     true = list()
+    model.eval()
     with torch.no_grad():
-        for x, y, _, _ in data_loader:    
-            y = y.to(device)
-            x = x.to(device)
-            y_pred = model(x)
+        for xx, y in data_loader:    
+            xx = (x.to(device) for x in xx)
+            y_pred = model(*xx)
             pred.append(torch.sigmoid(y_pred))
             true.append(y)
     return torch.Tensor(pred), torch.Tensor(true)

@@ -1,16 +1,36 @@
 import os
-import torch
-import numpy as np
-import pandas as pd
 import kmbio  # fork of biopython PDB with some changes in how the structure, chain, etc. classes are defined.
 import proteinsolver
-
-from torch_geometric.data import Dataset
+import torch
+import torch_geometric
 from pathlib import Path
 from joblib import Parallel, delayed
+from .dataset_utils import*
 
 
-class ProteinDataset(Dataset):
+class LSTMDataset(torch.utils.data.Dataset):
+    def __init__(
+        self, 
+        data_dir, 
+        annotations_path, 
+        transform=None, 
+        target_transform=None
+    ):
+        self.data_dir = data_dir
+        self.transform = transform
+        self.target_transform = target_transform
+        self.annotations = torch.Tensor(torch.load(annotations_path))
+
+    def __len__(self):
+        return len(self.annotations)
+
+    def __getitem__(self, idx):
+        x = torch.load(f"{self.data_dir}/data_{idx}.pt")
+        y = self.annotations[idx]
+        return x, y
+
+
+class ProteinDataset(torch_geometric.data.Dataset):
     """
     Variation of torch_geometric.data.Dataset.
 
@@ -101,60 +121,3 @@ class ProteinDataset(Dataset):
 
     def get(self, idx):
         return torch.load(Path(f"{self._processed_dir}/data_{idx}.pt"))
-
-
-def merge_chains(structure, merged_chain_name="A"):
-    """merges a structure with multiple chains into a single chain"""
-    # generate empty structure
-    new_structure = kmbio.PDB.Structure(structure.id)
-    new_model = kmbio.PDB.Model(0)
-    new_structure.add(new_model)
-    new_chain = kmbio.PDB.Chain(merged_chain_name)
-    new_model.add(new_chain)
-
-    # sort chains according to index of first residue
-    chains = list(structure.chains)
-    start_positions = [
-        list(chain.residues)[0].id[1] for chain in chains
-    ]  # idx 1 is residue position
-    sorted_chains = [chain for _, chain in sorted(zip(start_positions, chains))]
-
-    chain_pos_offset = 0  # constant to offset positions of residues in other chains
-    for i, chain in enumerate(sorted_chains):
-        res_list = list(chain.residues)
-        for j, res in list(enumerate(res_list))[::-1]:  # reverse to prevent duplicate idxs
-            if i > 0:  # skip first chain
-                res.id = (res.id[0], j + chain_pos_offset + 1, res.id[2])
-            res.chain = chain.id
-        chain_pos_offset += res_list[-1].id[1]
-        new_chain.add(chain.residues)
-    return new_structure
-
-
-def get_metadata(path):
-    """get targets, etc. from dataset"""
-    metadata = dict()
-    infile = open(path)
-    for line in infile:
-        if line[0] != "#":
-            line = line.strip().split(",")
-            data_id = line[0]
-            data_bind = line[5]
-            metadata[data_id] = int(data_bind)
-    return metadata
-
-
-def get_data(model_dir, metadata):
-    """
-    Loads a set of protein models for a given dir.
-    """
-    metadata = get_metadata(metadata)
-
-    target_list = list()
-    path_list = list()
-    for model in model_dir.glob("*"):  # iterate over and collect each model
-        path_list.append(model)
-        model_id = model.name.split("_")[0]
-        target = metadata[model_id]
-        target_list.append(target)
-    return np.array(path_list), np.array(target_list)
