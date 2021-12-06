@@ -12,6 +12,7 @@ from .lstm_utils import*
 from torch.nn.modules.container import ModuleList
 from torch_geometric.nn.inits import reset
 from torch_geometric.utils import scatter_, to_dense_adj
+from torch_geometric.nn import global_mean_pool
 
 # From https://gitlab.com/elaspic/elaspic2/-/tree/master/src/elaspic2/plugins/proteinsolver/data/ps_191f05de
 
@@ -291,6 +292,66 @@ class Net(nn.Module):
             edge_attr = edge_attr + edge_attr_out
 
         return x#, edge_attr
+
+
+class MyGNN(nn.Module):
+    def __init__(self, x_input_size, adj_input_size, hidden_size, output_size):
+        super().__init__()
+
+        self.embed_x = nn.Sequential(
+            nn.Embedding(x_input_size, hidden_size),
+            nn.ReLU(),
+            nn.Linear(hidden_size, hidden_size),
+            nn.LayerNorm(hidden_size),
+            # nn.ReLU(),
+        )
+        self.embed_adj = (
+            nn.Sequential(
+                nn.Linear(adj_input_size, hidden_size),
+                nn.ReLU(),
+                nn.Linear(hidden_size, hidden_size),
+                nn.LayerNorm(hidden_size),
+                # nn.ELU(),
+            )
+            if adj_input_size
+            else None
+        )
+        self.graph_conv_0 = get_graph_conv_layer(
+            (2 + bool(adj_input_size)) * hidden_size, 2 * hidden_size, hidden_size
+        )
+
+        N = 3
+        graph_conv = get_graph_conv_layer(3 * hidden_size, 2 * hidden_size, hidden_size)
+        self.graph_conv = _get_clones(graph_conv, N)
+
+        self.linear_out = nn.Linear(hidden_size, output_size)  # re-assign to (hidden_size, 1)
+        
+    def forward(self, x, edge_index, edge_attr, batch):
+        x = self.forward_without_last_layer(x, edge_index, edge_attr)
+        x = global_mean_pool(x, batch)
+        x = F.dropout(x, p=0.5)
+        x = self.linear_out(x)
+        return x
+
+    def forward_without_last_layer(self, x, edge_index, edge_attr):
+        x = self.embed_x(x)
+        # edge_index, _ = add_self_loops(edge_index)  # We should remove self loops in this case!
+        edge_attr = self.embed_adj(edge_attr) if edge_attr is not None else None
+
+        x_out, edge_attr_out = self.graph_conv_0(x, edge_index, edge_attr)
+        x = x + x_out
+        edge_attr = (
+            (edge_attr + edge_attr_out) if edge_attr is not None else edge_attr_out
+        )
+
+        for i in range(3):
+            x = F.relu(x)
+            edge_attr = F.relu(edge_attr)
+            x_out, edge_attr_out = self.graph_conv[i](x, edge_index, edge_attr)
+            x = x + x_out
+            edge_attr = edge_attr + edge_attr_out
+
+        return x
 
 
 def _get_clones(module, N):
