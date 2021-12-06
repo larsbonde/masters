@@ -53,7 +53,7 @@ hidden_size = 128
 
 # general params
 batch_size = 4
-epochs = 4
+epochs = 20
 learning_rate = 1e-2
 lr_decay = 1 #0.98
 w_decay = 0
