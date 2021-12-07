@@ -52,10 +52,10 @@ adj_input_size = 2
 hidden_size = 128
 
 # general params
-batch_size = 4
-epochs = 20
-learning_rate = 1e-2
-lr_decay = 1 #0.98
+batch_size = 16
+epochs = 100
+learning_rate = 1e-3
+lr_decay = 0.98 #0.98
 w_decay = 0
 
 # touch files to ensure output
