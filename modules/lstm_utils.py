@@ -58,7 +58,7 @@ def lstm_quad_train(
 
     for e in range(epochs):
         
-        train_sampler = BatchSampler(SubsetRandomSampler(train_idx), batch_size=batch_size, drop_last=False)
+        train_sampler = BatchSampler(SubsetRandomSampler(train_idx), batch_size=batch_size, drop_last=True)
         valid_sampler = BatchSampler(SubsetRandomSampler(valid_idx), batch_size=1, drop_last=False)
         
         train_loader = DataLoader(dataset=dataset, batch_sampler=train_sampler, collate_fn=collate_fn)
