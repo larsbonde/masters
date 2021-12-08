@@ -11,22 +11,22 @@
 #PBS -m abe
 ###
 ### Compute resources, here 1 core on 1 node
-#PBS -l nodes=1:ppn=4
+#PBS -l nodes=1:ppn=16:gpus=1
 ###
 ### Required RAM in GB
-#PBS -l mem=20GB
+#PBS -l mem=100GB
 ###
 ### How long (max) will the job take, here 24 hours
-#PBS -l walltime=30:00:00
+#PBS -l walltime=70:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
-#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err.log
-#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run.log
+#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_filter_tests.log
+#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_filter_tests.log
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N ps_embed
+#PBS -N filter_tests
 ###
 ### More qsub options can be added here
 
@@ -38,6 +38,10 @@
 module load tools 
 module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
-conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
+conda activate /home/projects/ht3_aim/people/sebdel/envs/ps_gpu
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/pos_encode_esm_emb.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_model_cdr_drop_on_ab.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_model_cdr_drop_on_a_or_b.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_model_cdr_drop_on_a.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_model_cdr_drop_on_b.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_model_cdr_drop_on_none.py

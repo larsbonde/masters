@@ -25,8 +25,8 @@ dataset = LSTMDataset(
     data_dir=processed_dir / "gnn_out_pos_128", 
     annotations_path=processed_dir / "gnn_out_pos_128" / "targets.pt"
 )
-esm_dir = processed_dir / "esm_1b_embeddings/esm_encodings/"
-new_esm_dir = processed_dir / "esm_1b_embeddings/esm_encodings_pos/"
+esm_dir = data_root / "processed" / "esm_1b_embeddings/esm_encodings/"
+new_esm_dir = data_root/ "processed" / "esm_1b_embeddings/esm_encodings_pos/"
 new_esm_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
 
 for i in range(len(dataset)):
