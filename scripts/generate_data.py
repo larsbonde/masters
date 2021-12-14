@@ -2,7 +2,6 @@ import sys
 sys.path.append('/home/projects/ht3_aim/people/sebdel/masters/') # add my repo to python path
 import os
 import torch
-import torch.nn.functional as F
 import torch_geometric
 import kmbio  # fork of biopython PDB with some changes in how the structure, chain, etc. classes are defined.
 import numpy as np
@@ -10,11 +9,7 @@ import pandas as pd
 import proteinsolver
 import modules
 
-from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
-from sklearn.model_selection import KFold
-from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import *
-from torch import nn, optim
+from torch.utils.data import Dataset, DataLoader
 from pathlib import Path
 
 from modules.dataset import *
@@ -22,54 +17,7 @@ from modules.utils import *
 from modules.model import *
 from modules.lstm_utils import *
 
-np.random.seed(1)
-
-def create_gnn_embeddings(
-    dataset, 
-    out_dir, 
-    device, 
-    gnn_func, 
-    cores=1, 
-    overwrite=False, 
-    chain_keys=np.array(["P", "M", "A", "B"])
-):  
-    def _sub_process(out_path, data, chain_keys=chain_keys, gnn_func=gnn_func):
-        #data = data.to("cpu")
-        with torch.no_grad():
-            out = gnn_func(data.x, data.edge_index, data.edge_attr)
-
-        # add positional encoding of chains
-        positional_encoding = np.zeros((len(data.x), len(chain_keys)))
-        for j, p in enumerate(data.chain_map[0]):
-            positional_encoding[j][np.where(chain_keys == p)] = 1
-        positional_encoding = torch.Tensor(positional_encoding)
-        out = torch.cat((out, positional_encoding), dim=1)
-
-        torch.save(out, out_path)
-
-    out_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
-    
-    data_loader = torch_geometric.loader.DataLoader(dataset, shuffle=False, batch_size=1)
-    out_files = list()
-    targets = list()
-    for i, data in enumerate(data_loader):
-        out_path = out_dir / f"data_{i}.pt"
-        if not out_path.is_file() or overwrite:
-            out_files.append(out_path)
-        targets.append([data.y])
-    torch.save(targets, out_dir / f"targets.pt")
-
-    #sub_process = lambda out_path, data: _sub_process(
-    #    out_path,
-    #    data,
-    #    gnn_func=gnn_func,
-    #    chain_keys=chain_keys,
-    #)
-    #args = zip(out_files, data_loader)
-    #Parallel(n_jobs=cores)(delayed(_sub_process)(*arg) for arg in args)
-    for arg in zip(out_files, data_loader):  # use instead of failed attempt at parallelizing pytorch stuff
-        _sub_process(*arg)
-
+np.random.seed(0)
 
 # Only root needs to be changed
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
@@ -109,9 +57,9 @@ gnn = gnn.to(device)
 raw_files = np.array(metadata["path"])
 targets = np.array(metadata["binder"])
 
-dataset = ProteinDataset(processed_dir, raw_files, targets, cores=30, overwrite=False)
+dataset = ProteinDataset(processed_dir, raw_files, targets, cores=1, overwrite=True)
 
 # Create GNN embeddings (gnn.forward_without_last_layer=128 dim, gnn.forward=20 dim)
 gnn_func = gnn.forward_without_last_layer
 out_dir = processed_dir / "gnn_out_pos_128"
-create_gnn_embeddings(dataset, out_dir, device, gnn_func, cores=30, overwrite=False)
+create_gnn_embeddings(dataset, out_dir, device, gnn_func, cores=1, overwrite=True)
