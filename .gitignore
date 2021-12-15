@@ -2,6 +2,7 @@
 data/models/*
 data/train/*
 data/test/*
+data/esm_1b_stuff/*
 data/210916_TCRpMHCmodels/*
 data/embedding_verification/*
 data/neat_data/*
