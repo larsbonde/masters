@@ -52,7 +52,7 @@ def lstm_quad_train(
 ):
     train_losses = list()
     valid_losses = list()
-    epochs_since_last_improv = 0
+    #epochs_since_last_improv = 0
     best_valid_loss = float("inf") 
     best_model = model.state_dict()
 
@@ -100,13 +100,16 @@ def lstm_quad_train(
         if valid_loss < best_valid_loss:
             best_model = model.state_dict()
             best_valid_loss = valid_loss
-            epochs_since_last_improv = 0
-        else:
-            epochs_since_last_improv += 1
+        #    epochs_since_last_improv = 0
+        #else:
+        #    epochs_since_last_improv += 1
 
-        if epochs_since_last_improv > 20 and early_stopping:
-            model.load_state_dict(best_model)
-            break
+        #if epochs_since_last_improv > 20 and early_stopping:
+        #    model.load_state_dict(best_model)
+        #    break
+
+    if early_stopping:
+        model.load_state_dict(best_model)
 
     return model, train_losses, valid_losses
 
