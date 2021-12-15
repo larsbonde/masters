@@ -50,6 +50,6 @@ for i in range(len(dataset)):
     
     esm_ps_out = torch.hstack((esm_emb, gnn_emb))
     
-    torch.save(esm_out, esm_ps_dir / f"data_{i}.pt")
+    torch.save(esm_ps_out, esm_ps_dir / f"data_{i}.pt")
 
 
