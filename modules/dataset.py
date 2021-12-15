@@ -113,7 +113,7 @@ class ProteinDataset(torch_geometric.data.Dataset):
         for raw_file, target, processed_path in zip(self._raw_file_names, self.targets, self._processed_file_names):
             if processed_path not in processed_file_set or self._overwrite:
                 args.append([i, raw_file, target, processed_path])
-                _sub_process(args[-1])
+                _sub_process(*args[-1])
             i += 1
         #Parallel(n_jobs=self.cores)(delayed(_sub_process)(*arg) for arg in args)  bug with parallel?
 
