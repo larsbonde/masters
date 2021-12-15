@@ -25,7 +25,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
 data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
-processed_dir = data_root / "processed" / "tcr_binding"
+processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 out_dir = root / "state_files" / "tcr_binding" / "lstm_es"
 model_dir = data_root / "raw" / "tcrpmhc"
@@ -43,20 +43,22 @@ unique_peptides = metadata["peptide"].unique()
 loo_train_partitions, loo_test_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 dataset = LSTMDataset(
-    data_dir=processed_dir / "gnn_out_pos_128", 
-    annotations_path=processed_dir / "gnn_out_pos_128" / "targets.pt"
+    data_dir=processed_dir / "proteinsolver_embeddings_pos", 
+    annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
 )
 
 # LSTM params
-batch_size = 4
+batch_size = 8
 embedding_dim = 128
-hidden_dim = 64 #128 #32
-num_layers = 3  # from 2
-epochs = 70
+hidden_dim = 128 #128 #32
+num_layers = 2  # from 2
+
+# general params
+epochs = 150
 learning_rate = 1e-4
-lr_decay = 0.98 #TODO set some val, 1=no effect
-w_decay = 0
-dropout = 0.8  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
+lr_decay = 0.99
+w_decay = 1e-3
+dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
 # touch files to ensure output
 n_splits = len(unique_peptides)

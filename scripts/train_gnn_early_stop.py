@@ -25,9 +25,9 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
 data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
-processed_dir = data_root / "processed" / "tcr_binding"
+processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetuning_es"
+out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune"
 model_dir = data_root / "raw" / "tcrpmhc"
 
 paths = list(model_dir.glob("*"))
@@ -40,7 +40,12 @@ metadata = metadata.reset_index(drop=True)
 
 raw_files = np.array(metadata["path"])
 targets = np.array(metadata["binder"])
-dataset = ProteinDataset(processed_dir, raw_files, targets, overwrite=False)
+dataset = ProteinDataset(
+    processed_dir / "proteinsolver_preprocess", 
+    raw_files, 
+    targets, 
+    overwrite=False
+)
 
 loo_train_partitions, loo_test_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
@@ -50,11 +55,11 @@ adj_input_size = 2
 hidden_size = 128
 
 # general params
-batch_size = 16
-epochs = 100
-learning_rate = 1e-3
-lr_decay = 0.98 #0.98
-w_decay = 0
+batch_size = 32
+epochs = 1000
+learning_rate = 1e-5
+lr_decay = 0.995
+w_decay = 1e-3
 
 # touch files to ensure output
 n_splits = len(unique_peptides)
