@@ -24,7 +24,7 @@ np.random.seed(0)
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
 data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
-processed_dir = data_root / "processed" / "tcr_binding"
+processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 out_dir = root / "state_files" / "tcr_binding"
 model_dir = data_root / "raw" / "tcrpmhc"
@@ -58,9 +58,15 @@ gnn = gnn.to(device)
 raw_files = np.array(metadata["path"])
 targets = np.array(metadata["binder"])
 
-dataset = ProteinDataset(processed_dir, raw_files, targets, cores=1, overwrite=True)
+dataset = ProteinDataset(
+    processed_dir / "proteinsolver_preprocess", 
+    raw_files, 
+    targets, 
+    cores=20, 
+    overwrite=True
+)
 
 # Create GNN embeddings (gnn.forward_without_last_layer=128 dim, gnn.forward=20 dim)
 gnn_func = gnn.forward_without_last_layer
-out_dir = processed_dir / "gnn_out_pos_128"
+out_dir = processed_dir / "proteinsolver_embeddings_pos"
 create_gnn_embeddings(dataset, out_dir, device, gnn_func, cores=1, overwrite=True)
