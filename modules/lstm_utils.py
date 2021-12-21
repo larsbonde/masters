@@ -97,9 +97,9 @@ def lstm_quad_train(
         train_losses.append(train_loss / train_len)
         valid_losses.append(valid_loss / valid_len)
 
-        if valid_loss < best_valid_loss:
+        if valid_losses[-1] < best_valid_loss:
             best_model = model.state_dict()
-            best_valid_loss = valid_loss
+            best_valid_loss = valid_losses[-1]
         #    epochs_since_last_improv = 0
         #else:
         #    epochs_since_last_improv += 1
