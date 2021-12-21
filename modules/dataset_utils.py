@@ -5,11 +5,9 @@ import torch_geometric
 from pathlib import Path
 
 
-def filter_peptides(partition_1, partition_2, filtered_peptides, metadata):  # TODO modularize to take a single partition instead of two
+def filter_peptides(partition_1, partition_2, unique_peptides, filtered_peptides, metadata):  # TODO modularize to take a single partition instead of two
     filtered_indices = list()
     filtered_partitions = list()
-
-    unique_peptides = metadata["peptide"].unique()
 
     for pep in filtered_peptides:
         filtered_indices.extend(list(metadata[metadata["peptide"] == pep].index))
@@ -87,6 +85,7 @@ def generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV"):
     loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
         loo_train_partitions, 
         loo_test_partitions,
+        unique_peptides,
         ["CLGGLLTMV", "ILKEPVHGV"],
         metadata,
     )
