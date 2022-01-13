@@ -7,6 +7,7 @@ from pathlib import Path
 from joblib import Parallel, delayed
 from .dataset_utils import*
 
+import sys
 
 class LSTMDataset(torch.utils.data.Dataset):
     def __init__(
@@ -90,7 +91,7 @@ class ProteinDataset(torch_geometric.data.Dataset):
         def _sub_process(j, raw_file, target, processed_path):
             # Read data from raw_path and process
             structure_all = kmbio.PDB.load(raw_file)
-            structure_all = merge_chains(structure_all) 
+            structure_all = merge_chains(structure_all)
             structure = kmbio.PDB.Structure(j, structure_all[0].extract("A"))
             pdata = proteinsolver.utils.extract_seq_and_adj(
                 structure, "A", remove_hetatms=True

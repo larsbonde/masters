@@ -23,7 +23,7 @@ def gnn_train(
     train_losses = list()
     valid_losses = list()
     epochs_since_last_improv = 0
-    best_valid_loss = float("inf") 
+    best_valid_loss = float("inf")
     best_model = model.state_dict()
 
     for e in range(epochs):
@@ -68,7 +68,7 @@ def gnn_train(
         if valid_losses[-1] < best_valid_loss:
             best_model = model.state_dict()
             best_valid_loss = valid_losses[-1]
-           epochs_since_last_improv = 0
+            epochs_since_last_improv = 0
         else:
             epochs_since_last_improv += 1
 
