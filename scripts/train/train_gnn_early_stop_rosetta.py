@@ -47,7 +47,7 @@ dataset = ProteinDataset(
     overwrite=False
 )
 
-loo_train_partitions, loo_test_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
+loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 # GNN params
 num_features = 20
@@ -69,7 +69,7 @@ state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
 i = 0
-for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
+for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partitions, loo_valid_partitions):
     
     net = MyGNN(
         x_input_size=num_features + 1, 

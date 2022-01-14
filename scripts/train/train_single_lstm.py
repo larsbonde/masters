@@ -40,7 +40,7 @@ metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 unique_peptides = metadata["peptide"].unique()
 
-loo_train_partitions, loo_test_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
+loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 dataset = LSTMDataset(
     data_dir=processed_dir / "proteinsolver_embeddings_pos", 
@@ -50,8 +50,8 @@ dataset = LSTMDataset(
 # LSTM params
 batch_size = 8
 embedding_dim = 128
-hidden_dim = 256 + 4 #128 #32
-num_layers = 2  # from 2
+hidden_dim = 256 + 4
+num_layers = 2
 
 # general params
 epochs = 150
@@ -70,9 +70,9 @@ pred_paths = touch_output_files(save_dir, "pred", n_splits)
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 i = 0
-for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
+for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partitions, loo_valid_partitions):
     
-    net = QuadLSTM(
+    net = MyLSTM(
         embedding_dim=embedding_dim, 
         hidden_dim=hidden_dim, 
         num_layers=num_layers, 
@@ -91,7 +91,7 @@ for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
         lr_lambda=lambda epoch: lr_decay
     )
     
-    net, train_losses, valid_losses = lstm_quad_train(
+    net, train_losses, valid_losses = lstm_train(
         net,
         epochs,
         criterion,
@@ -102,13 +102,14 @@ for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
         valid_idx,
         batch_size,
         device,
+        collate_fn=pad_collate
         extra_print=extra_print_str.format(save_dir, i, unique_peptides[i]),
         early_stopping=True,
     )
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = lstm_quad_predict(net, dataset, test_idx, device)     
+    pred, true = lstm_predict(net, dataset, test_idx, device, collate_fn=pad_collate)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
     i += 1

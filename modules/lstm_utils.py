@@ -35,7 +35,7 @@ def pad_collate_chain_split(batch, pad_val=0, n_split=4):
     return x_split_batch, yy_pad
 
 
-def lstm_quad_train(
+def lstm_train(
     model,
     epochs,
     criterion,
@@ -91,9 +91,12 @@ def lstm_quad_train(
         model.eval()
         with torch.no_grad():
             for xx, y in valid_loader:    
-                y = y.to(device)
-                xx = (x.to(device) for x in xx)
-                y_pred = model(*xx)
+                if len(xx) > 1:
+                    xx = (x.to(device) for x in xx)
+                    y_pred = model(*xx)
+                else:
+                    xx = xx.to(device)
+                    y_pred = model(xx)
                 loss = criterion(y_pred, y)
                 valid_loss += loss.item()
         
@@ -118,15 +121,19 @@ def lstm_quad_train(
     return model, train_losses, valid_losses
 
 
-def lstm_quad_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split):
+def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split):
     data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
     pred = list()
     true = list()
     model.eval()
     with torch.no_grad():
         for xx, y in data_loader:    
-            xx = (x.to(device) for x in xx)
-            y_pred = model(*xx)
+            if len(xx) > 1:
+                xx = (x.to(device) for x in xx)
+                y_pred = model(*xx)
+            else:
+                xx = xx.to(device)
+                y_pred = model(xx)
             pred.append(torch.sigmoid(y_pred))
             true.append(y)
     return torch.Tensor(pred), torch.Tensor(true)

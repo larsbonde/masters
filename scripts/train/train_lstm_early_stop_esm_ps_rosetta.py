@@ -40,7 +40,7 @@ metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 unique_peptides = metadata["peptide"].unique()
 
-loo_train_partitions, loo_test_partitions, valid_idx, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
+loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 dataset = LSTMDataset(
     data_dir=processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair", 
@@ -70,7 +70,7 @@ pred_paths = touch_output_files(save_dir, "pred", n_splits)
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 i = 0
-for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
+for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partitions, loo_valid_partitions):
     
     net = QuadLSTM(
         embedding_dim=embedding_dim, 
@@ -91,7 +91,7 @@ for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
         lr_lambda=lambda epoch: lr_decay
     )
     
-    net, train_losses, valid_losses = lstm_quad_train(
+    net, train_losses, valid_losses = lstm_train(
         net,
         epochs,
         criterion,
@@ -108,7 +108,7 @@ for train_idx, test_idx in zip(loo_train_partitions, loo_test_partitions):
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = lstm_quad_predict(net, dataset, test_idx, device)     
+    pred, true = lstm_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
     i += 1

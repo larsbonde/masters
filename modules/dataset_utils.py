@@ -53,33 +53,46 @@ def generate_2_loo_partitions(metadata):
     loo_train_partitions, loo_valid_partitions, unique_peptides = filter_peptides(
         loo_train_partitions, 
         loo_valid_partitions,
+        unique_peptides,
         ["CLGGLLTMV", "ILKEPVHGV"],
         metadata,
     )
     return loo_train_partitions, loo_valid_partitions, unique_peptides
 
 
-def generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV"):
+def generate_3_loo_partitions(metadata, drop_swapped=True, valid_pep="KTWGQYWQV"):
     """
-    Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data.
+    Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data as default.
     """
-    metadata = metadata[metadata["origin"] != "swapped"]
+    if drop_swapped:    
+        metadata = metadata[metadata["origin"] != "swapped"]
     unique_peptides = metadata["peptide"].unique()
     unique_peptides = np.delete(unique_peptides, np.where(unique_peptides == valid_pep))
     
-    valid_df = metadata[metadata["peptide"] == valid_pep]
+    metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
     
     loo_train_partitions = list()
     loo_test_partitions = list()
-    
+    loo_valid_partitions = list()
+
     for pep in unique_peptides:
         test_df = metadata[metadata["peptide"] == pep]
+        test_unique_cdr = test_df["merged_chains"].unique()
+
+        valid_df = metadata[metadata["peptide"] == valid_pep]
+        if not drop_swapped:
+            valid_df = valid_df[~valid_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
+            valid_unique_cdr = valid_df["merged_chains"].unique()
+
         train_df = metadata[(metadata["peptide"] != pep) & (metadata["peptide"] != valid_pep)]
+        if not drop_swapped:
+            train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
+            train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(valid_unique_cdr))]
+
 
         loo_train_partitions.append(list(train_df.index))
         loo_test_partitions.append(list(test_df.index))
-        
-    valid_partition = list(valid_df.index)
+        loo_valid_partitions.append(list(valid_df.index))
 
     # hacky dataset fix
     loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
@@ -89,7 +102,7 @@ def generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV"):
         ["CLGGLLTMV", "ILKEPVHGV"],
         metadata,
     )
-    return loo_train_partitions, loo_test_partitions, valid_partition, unique_peptides
+    return loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides
 
 
 def create_gnn_embeddings(

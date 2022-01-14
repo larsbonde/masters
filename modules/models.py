@@ -42,7 +42,6 @@ class MyLSTM(nn.Module):
         torch.nn.init.xavier_uniform_(self.linear_2.weight)    
 
     def forward(self, x):
-        #x = nn.utils.rnn.pack_sequence(x)
         x, (h, c) = self.lstm(x)
         h_cat = torch.cat((h[-2, :, :], h[-1, :, :]), dim=1)
         out = self.linear_1(h_cat)
