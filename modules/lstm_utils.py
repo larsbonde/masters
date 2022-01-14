@@ -15,7 +15,7 @@ def pad_collate(batch, pad_val=0):
     xx_pad = nn.utils.rnn.pad_sequence(xx, batch_first=True, padding_value=pad_val)
     yy_pad = nn.utils.rnn.pad_sequence(yy, batch_first=True, padding_value=pad_val)
 
-    return xx_pad, yy_pad, x_lens, y_lens
+    return xx_pad, yy_pad
 
 
 def pad_collate_chain_split(batch, pad_val=0, n_split=4):
@@ -72,8 +72,12 @@ def lstm_quad_train(
         j = 0
         for xx, y in train_loader:    
             y = y.to(device)
-            xx = (x.to(device) for x in xx)
-            y_pred = model(*xx)
+            if len(xx) > 1:
+                xx = (x.to(device) for x in xx)
+                y_pred = model(*xx)
+            else:
+                xx = xx.to(device)
+                y_pred = model(xx)
             optimizer.zero_grad()
             loss = criterion(y_pred, y)
             loss.backward()

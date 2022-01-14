@@ -18,31 +18,38 @@ from torch_geometric.nn import global_mean_pool
 
 
 class MyLSTM(nn.Module):
-    """placeholder model"""
-    def __init__(self,  num_classes, num_features, num_layers, hidden_size):
+    def __init__(self,  embedding_dim, hidden_dim, num_layers, dropout=0.0):
         super(MyLSTM, self).__init__()
         
         self.num_layers = num_layers
-        self.hidden_size = hidden_size
+        self.hidden_dim = hidden_dim
+        self.dropout = dropout
         
         self.lstm = nn.LSTM(
-            input_size=num_features,
-            hidden_size=hidden_size,
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
             num_layers=num_layers, 
-            dropout=0.5, 
-            bidirectional=True
+            dropout=dropout, 
+            bidirectional=True,
+            batch_first=True,
         )
-        self.dropout = nn.Dropout(p=0.5)
-        self.linear = nn.Linear(hidden_size * 2, num_classes)
+        self.linear_dropout = nn.Dropout(p=dropout)
+        self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
+        self.linear_1 = nn.Linear(hidden_dim * 2, hidden_dim)
+        self.linear_2 = nn.Linear(hidden_dim, 1)
         
-        torch.nn.init.xavier_uniform_(self.linear.weight)
-    
+        torch.nn.init.xavier_uniform_(self.linear_1.weight) 
+        torch.nn.init.xavier_uniform_(self.linear_2.weight)    
+
     def forward(self, x):
-        x = nn.utils.rnn.pack_sequence(x)
+        #x = nn.utils.rnn.pack_sequence(x)
         x, (h, c) = self.lstm(x)
         h_cat = torch.cat((h[-2, :, :], h[-1, :, :]), dim=1)
-        out = self.dropout(h_cat)
-        out = self.linear(out)
+        out = self.linear_1(h_cat)
+        out = self.batch_norm(out)
+        out = F.relu(out)
+        out = self.linear_dropout(out)
+        out = self.linear_2(out)
         return out
 
 
