@@ -111,6 +111,57 @@ class QuadLSTM(nn.Module):
         return out
 
 
+class TripleLSTM(nn.Module):
+    def __init__(self, embedding_dim, hidden_dim, num_layers, dropout=0.0):
+        super(TripleLSTM, self).__init__()
+        
+        self.num_layers = num_layers
+        self.hidden_dim = hidden_dim
+        self.dropout = dropout
+        
+        self.lstm_1 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+        )       
+        self.lstm_2 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+        )        
+        self.lstm_3 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout, 
+            batch_first=True,
+        )     
+
+        self.linear_dropout = nn.Dropout(p=dropout)
+        self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
+        self.linear_1 = nn.Linear(hidden_dim * 3, hidden_dim)
+        self.linear_2 = nn.Linear(hidden_dim, 1)
+        
+        torch.nn.init.xavier_uniform_(self.linear_1.weight)
+        torch.nn.init.xavier_uniform_(self.linear_2.weight)
+    
+    def forward(self, x_1, x_2, x_3):
+        _, (h_1, _) = self.lstm_1(x_1)
+        _, (h_2, _) = self.lstm_2(x_2)
+        _, (h_3, _) = self.lstm_3(x_3)
+        h_cat = torch.cat((h_1[-1], h_2[-1], h_3[-1]), dim=1)
+        out = self.linear_1(h_cat)
+        out = self.batch_norm(out)
+        out = F.relu(out)
+        out = self.linear_dropout(out)
+        out = self.linear_2(out)
+        return out
+
+
 # ProteinSolver stuff
 class EdgeConvMod(torch.nn.Module):
     def __init__(self, nn, aggr="max"):
