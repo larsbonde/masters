@@ -72,7 +72,7 @@ extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 i = 0
 for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partitions, loo_valid_partitions):
     
-    net = QuadLSTM(
+    net = TripleLSTM(
         embedding_dim=embedding_dim, 
         hidden_dim=hidden_dim, 
         num_layers=num_layers, 
@@ -83,7 +83,7 @@ for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partiti
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(
         net.parameters(), 
-        lr=learning_rate, 
+        lr=learning_rate,
         weight_decay=w_decay,
     )
     scheduler = optim.lr_scheduler.MultiplicativeLR(
