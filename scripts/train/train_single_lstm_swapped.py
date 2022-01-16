@@ -40,7 +40,7 @@ metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 unique_peptides = metadata["peptide"].unique()
 
-loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
+loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, drop_swapped=True, valid_pep="KTWGQYWQV")
 
 dataset = LSTMDataset(
     data_dir=processed_dir / "proteinsolver_embeddings_pos", 
