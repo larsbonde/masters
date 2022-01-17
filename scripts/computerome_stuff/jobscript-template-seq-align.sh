@@ -11,7 +11,7 @@
 #PBS -m abe
 ###
 ### Compute resources, here 1 core on 1 node
-#PBS -l nodes=1:ppn=4:gpus=1
+#PBS -l nodes=1:ppn=4
 ###
 ### Required RAM in GB
 #PBS -l mem=50GB
@@ -21,12 +21,12 @@
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
-#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_lstm_ps_swap.log
-#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_lstm_ps_swap.log
+#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/cluster_seq_err.log
+#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/cluster_seq.log
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N lstm_single_ps_swapped
+#PBS -N cluster_seq
 ###
 ### More qsub options can be added here
 
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/train_single_lstm_swapped.py
+mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3_seqs.fsa clusterRes tmp --min-seq-id 0.8 -c 0.8 --cov-mode 1

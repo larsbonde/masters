@@ -11,22 +11,22 @@
 #PBS -m abe
 ###
 ### Compute resources, here 1 core on 1 node
-#PBS -l nodes=1:ppn=4:gpus=1
+#PBS -l nodes=1:ppn=14
 ###
 ### Required RAM in GB
 #PBS -l mem=50GB
 ###
 ### How long (max) will the job take, here 24 hours
-#PBS -l walltime=150:00:00
+#PBS -l walltime=10:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
-#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_lstm_ps_swap.log
-#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_lstm_ps_swap.log
+#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/embedding_verification_err.log
+#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/embedding_verification_embed.log
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N lstm_single_ps_swapped
+#PBS -N generate_embedding_verificaion
 ###
 ### More qsub options can be added here
 
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/train_single_lstm_swapped.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/generate_embedding_verification.py

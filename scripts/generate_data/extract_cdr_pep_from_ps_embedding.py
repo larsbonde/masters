@@ -11,11 +11,12 @@ import modules
 
 from torch.utils.data import Dataset, DataLoader
 from pathlib import Path
+from Bio import SeqIO
 
 from modules.dataset import *
 from modules.dataset_utils import *
 from modules.utils import *
-from modules.model import *
+from modules.models import *
 from modules.lstm_utils import *
 
 np.random.seed(0)
@@ -76,7 +77,7 @@ for i, record in enumerate(SeqIO.parse(full_seq_path, "fasta")):
     seq = np.array(list(record.seq))
     
     data = dataset_pre[i]
-    x = dataset_emb[i]
+    x = dataset_emb[i][0]
     metadata_row = metadata.iloc[i]
     
     new_data = list()

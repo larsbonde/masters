@@ -63,7 +63,7 @@ outdir_2 = data_root / "raw" / "p"
 outdir_1.mkdir(parents=True, exist_ok=True)
 outdir_2.mkdir(parents=True, exist_ok=True)
 
-overwrite = True
+overwrite = False
 for raw_file in raw_files:
 
     model_id = raw_file.name.split("_")[0]
@@ -125,6 +125,7 @@ dataset = ProteinDataset(
 # Create GNN embeddings (gnn.forward_without_last_layer=128 dim, gnn.forward=20 dim)
 gnn_func = gnn.forward_without_last_layer
 out_dir = processed_dir / "proteinsolver_embedding_verification"
+out_dir.mkdir(parents=True, exist_ok=True)
 
 for i in range(len(dataset)):
     out_path = out_dir / f"data_{i}.pt"
