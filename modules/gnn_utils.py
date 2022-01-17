@@ -18,6 +18,7 @@ def gnn_train(
     batch_size,
     device,
     early_stopping=False,
+    verbose=False,
     extra_print=None,
 ):
     train_losses = list()
@@ -48,8 +49,9 @@ def gnn_train(
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
-
-            display_func(j, train_len, e, train_losses, valid_losses, extra_print)
+            
+            if verbose:
+                display_func(j, train_len, e, train_losses, valid_losses, extra_print)
             j += 1
         
         valid_loss = 0

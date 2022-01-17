@@ -105,6 +105,45 @@ def generate_3_loo_partitions(metadata, drop_swapped=True, valid_pep="KTWGQYWQV"
     return loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides
 
 
+def K_fold_CV_from_clusters(cluster_path, n_split=5):
+    """loads clusters from mmseqs2 clustering tsv formatted results"""
+    clusters = dict()
+    with open(cluster_path) as file:
+        for line in file:
+            line = line.strip()
+            line = line.split("\t")
+            cluster_id = int(line[0])
+            seq_id = int(line[1])
+            if cluster_id not in clusters:
+                clusters[cluster_id] = [seq_id]
+            else:
+                clusters[cluster_id].append(seq_id)
+
+    clusters_list = list(clusters.values())
+    clusters_list.sort(key=len)
+
+    partitions = [list() for _ in range(n_split)]
+    
+    # round robin balancing of partitions
+    i = 0
+    for seq_idx in clusters_list:
+        partitions[i].extend(seq_idx)
+        i += 1
+        if i >= n_split:
+            i = 0        
+
+    train_partitions = [list() for _ in range(n_split)]
+    test_partitions = [list() for _ in range(n_split)]
+
+    for i in range(len(partitions)):
+        test_partitions[i] = partitions[i]
+        for j in range(len(partitions)):
+            if j != i:
+                train_partitions[i].extend(partitions[j])
+
+    return train_partitions, test_partitions
+
+
 def create_gnn_embeddings(
     dataset, 
     out_dir, 

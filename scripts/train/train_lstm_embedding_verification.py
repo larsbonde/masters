@@ -10,6 +10,7 @@ import modules
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
 from torch import nn, optim
 from pathlib import Path
+from sklearn.model_selection import KFold
 
 from modules.dataset_utils import *
 from modules.dataset import *
