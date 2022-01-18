@@ -25,7 +25,7 @@ def pad_collate_chain_split(batch, pad_val=0, n_split=4):
     for x in xx:
         for i in range(n_split):
             x_split_batch[i].append(x[x[:,-i - 1] == 1][:,:-n_split])  # slice based on positional encoding and remove encoding part
-            if len(x_split_batch[i]) == 0:
+            if len(x_split_batch[i][-1]) == 0:
                 keep_mask[i] = False
 
     x_split_batch_pad = list()
