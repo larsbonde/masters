@@ -18,12 +18,12 @@ def pad_collate(batch, pad_val=0):
     return xx_pad, yy_pad
 
 
-def pad_collate_chain_split(batch, pad_val=0, n_split=4):
+def pad_collate_chain_split(batch, pad_val=0, n_split=4, n_encode=4):
     (xx, yy) = zip(*batch)
     x_split_batch = [list() for _ in range(n_split)]
     for x in xx:
-        for i in range(n_split):
-            x_split_batch[i].append(x[x[:,-i - 1] == 1][:,:-n_split])  # slice based on positional encoding and remove encoding part
+        for i in range(n_encode):
+            x_split_batch[i].append(x[x[:,-i - 1] == 1][:,:-n_encode])  # slice based on positional encoding and remove encoding part
 
     for i in range(n_split):
         x_split_batch[i] = nn.utils.rnn.pad_sequence(
@@ -73,7 +73,7 @@ def lstm_train(
         j = 0
         for xx, y in train_loader:    
             y = y.to(device)
-            if len(xx) > 1:
+            if type(xx) == list:
                 xx = (x.to(device) for x in xx)
                 y_pred = model(*xx)
             else:
@@ -92,8 +92,9 @@ def lstm_train(
         valid_loss = 0
         model.eval()
         with torch.no_grad():
-            for xx, y in valid_loader:    
-                if len(xx) > 1:
+            for xx, y in valid_loader:
+                y = y.to(device)    
+                if type(xx) == list:
                     xx = (x.to(device) for x in xx)
                     y_pred = model(*xx)
                 else:
@@ -129,8 +130,9 @@ def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split
     true = list()
     model.eval()
     with torch.no_grad():
-        for xx, y in data_loader:    
-            if len(xx) > 1:
+        for xx, y in data_loader:
+            y = y.to(device)    
+            if type(xx) == list:
                 xx = (x.to(device) for x in xx)
                 y_pred = model(*xx)
             else:

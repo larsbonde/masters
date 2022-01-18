@@ -92,7 +92,7 @@ for train_idx, test_idx in CV.split(dataset):
         valid_idx,
         batch_size,
         device,
-        collate_fn=pad_collate
+        collate_fn=pad_collate,
         extra_print=extra_print_str.format(save_dir, i, unique_peptides[i]),
         early_stopping=True,
     )

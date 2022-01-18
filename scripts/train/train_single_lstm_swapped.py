@@ -49,7 +49,7 @@ dataset = LSTMDataset(
 
 # LSTM params
 batch_size = 8
-embedding_dim = 128
+embedding_dim = 128 + 4
 hidden_dim = 256 + 4
 num_layers = 2
 
