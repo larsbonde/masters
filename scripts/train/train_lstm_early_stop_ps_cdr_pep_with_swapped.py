@@ -10,6 +10,7 @@ import modules
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
 from torch import nn, optim
 from pathlib import Path
+from functools import partial
 
 from modules.dataset_utils import *
 from modules.dataset import *
@@ -27,7 +28,7 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_single_swapped"
+out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_cdr_pep_only_with_swapped"
 model_dir = data_root / "raw" / "tcrpmhc"
 
 paths = list(model_dir.glob("*"))
@@ -43,15 +44,15 @@ unique_peptides = metadata["peptide"].unique()
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, drop_swapped=False, valid_pep="KTWGQYWQV")
 
 dataset = LSTMDataset(
-    data_dir=processed_dir / "proteinsolver_embeddings_pos", 
+    data_dir=processed_dir / "proteinsolver_embeddings_cdr_pep_only", 
     annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
 )
 
 # LSTM params
 batch_size = 8
-embedding_dim = 128 + 4
-hidden_dim = 256 + 4
-num_layers = 2
+embedding_dim = 128
+hidden_dim = 128 #128 #32
+num_layers = 2  # from 2
 
 # general params
 epochs = 150
@@ -72,7 +73,7 @@ extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 i = 0
 for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partitions, loo_valid_partitions):
     
-    net = MyLSTM(
+    net = TripleLSTM(
         embedding_dim=embedding_dim, 
         hidden_dim=hidden_dim, 
         num_layers=num_layers, 
@@ -83,7 +84,7 @@ for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partiti
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(
         net.parameters(), 
-        lr=learning_rate, 
+        lr=learning_rate,
         weight_decay=w_decay,
     )
     scheduler = optim.lr_scheduler.MultiplicativeLR(
@@ -102,14 +103,14 @@ for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partiti
         valid_idx,
         batch_size,
         device,
-        collate_fn=pad_collate,
+        collate_fn=partial(pad_collate_chain_split, n_split=3)
         extra_print=extra_print_str.format(save_dir, i, unique_peptides[i]),
         early_stopping=True,
     )
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = lstm_predict(net, dataset, test_idx, device, collate_fn=pad_collate)     
+    pred, true = lstm_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
     i += 1
