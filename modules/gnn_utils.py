@@ -74,7 +74,7 @@ def gnn_train(
         else:
             epochs_since_last_improv += 1
 
-        if epochs_since_last_improv > 200 and early_stopping:
+        if epochs_since_last_improv > 100 and early_stopping:
             model.load_state_dict(best_model)
             break
 

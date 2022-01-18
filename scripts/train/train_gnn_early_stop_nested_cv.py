@@ -49,8 +49,6 @@ dataset = ProteinDataset(
     overwrite=False
 )
 
-train_partitions, test_partitions = K_fold_CV_from_clusters(cluster_path, n_splits)
-
 # GNN params
 num_features = 20
 adj_input_size = 2
@@ -58,17 +56,21 @@ hidden_size = 128
 
 # general params
 batch_size = 8
-n_splits = 5
 epochs = 600
 learning_rate = 1e-5
 lr_decay = 0.999
 w_decay = 1e-3
 
 # touch files to ensure output
+n_splits = 5
 save_dir = get_non_dupe_dir(out_dir)
 loss_paths = touch_output_files(save_dir, "loss", n_splits)
 state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
+
+train_partitions, test_partitions = K_fold_CV_from_clusters(cluster_path, n_splits)
+
+extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 i = 0
 for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
@@ -78,41 +80,51 @@ for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
     best_inner_fold_models = list()
     CV = KFold(n_splits=n_splits, shuffle=True)
     for train_idx, valid_idx in CV.split(outer_train_idx):
-    
-    net = MyGNN(
-        x_input_size=num_features + 1, 
-        adj_input_size=adj_input_size, 
-        hidden_size=hidden_size, 
-        output_size=num_features
-    )
-    net.load_state_dict(torch.load(state_file, map_location=device))
-    net.linear_out = nn.Linear(hidden_size, 1)  # rewrite final layer to scalar output
-    net = net.to(device)
+        net = MyGNN(
+            x_input_size=num_features + 1, 
+            adj_input_size=adj_input_size, 
+            hidden_size=hidden_size, 
+            output_size=num_features
+        )
+        net.load_state_dict(torch.load(state_file, map_location=device))
+        net.linear_out = nn.Linear(hidden_size, 1)  # rewrite final layer to scalar output
+        net = net.to(device)
 
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(
-        net.parameters(), 
-        lr=learning_rate, 
-        weight_decay=w_decay,
-    ) 
-    scheduler = optim.lr_scheduler.MultiplicativeLR(
-        optimizer, 
-        lr_lambda=lambda epoch: lr_decay
-    )
-    
-    net, train_losses, valid_losses = gnn_train(
-        net,
-        epochs,
-        criterion,
-        optimizer,
-        scheduler,
-        dataset,
-        train_idx,
-        valid_idx,
-        batch_size,
-        device,
-        early_stopping=True,
-    )
+        criterion = nn.BCEWithLogitsLoss()
+        optimizer = optim.Adam(
+            net.parameters(), 
+            lr=learning_rate, 
+            weight_decay=w_decay,
+        ) 
+        scheduler = optim.lr_scheduler.MultiplicativeLR(
+            optimizer, 
+            lr_lambda=lambda epoch: lr_decay
+        )
+        
+        net, train_losses, valid_losses = gnn_train(
+            net,
+            epochs,
+            criterion,
+            optimizer,
+            scheduler,
+            dataset,
+            train_idx,
+            valid_idx,
+            batch_size,
+            device,
+            early_stopping=True,
+        )
+
+        best_inner_fold_valid_losses.append(min(valid_losses))
+        inner_train_losses.append(train_losses)
+        inner_valid_losses.append(valid_losses)
+        best_inner_fold_models.append(net)
+
+    best_inner_idx = best_inner_fold_valid_losses.index(min(best_inner_fold_valid_losses))
+    net = best_inner_fold_models[best_inner_idx]
+    train_losses = inner_train_losses[best_inner_idx]
+    valid_losses = inner_valid_losses[best_inner_idx]
+
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
