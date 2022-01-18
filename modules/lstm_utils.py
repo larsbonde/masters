@@ -18,21 +18,28 @@ def pad_collate(batch, pad_val=0):
     return xx_pad, yy_pad
 
 
-def pad_collate_chain_split(batch, pad_val=0, n_split=4, n_encode=4):
+def pad_collate_chain_split(batch, pad_val=0, n_split=4):
     (xx, yy) = zip(*batch)
     x_split_batch = [list() for _ in range(n_split)]
+    keep_mask = [True for _ in range(n_split)]
     for x in xx:
-        for i in range(n_encode):
-            x_split_batch[i].append(x[x[:,-i - 1] == 1][:,:-n_encode])  # slice based on positional encoding and remove encoding part
+        for i in range(n_split):
+            x_split_batch[i].append(x[x[:,-i - 1] == 1][:,:-n_split])  # slice based on positional encoding and remove encoding part
+            if len(x_split_batch[i]) == 0:
+                keep_mask[i] = False
 
+    x_split_batch_pad = list()
     for i in range(n_split):
-        x_split_batch[i] = nn.utils.rnn.pad_sequence(
-            x_split_batch[i], 
-            batch_first=True, 
-            padding_value=pad_val
+        if keep_mask[i]:
+            x_split_batch_pad.append(
+                nn.utils.rnn.pad_sequence(
+                    x_split_batch[i], 
+                    batch_first=True, 
+                    padding_value=pad_val
+            )
         )
     yy_pad = nn.utils.rnn.pad_sequence(yy, batch_first=True, padding_value=pad_val)
-    return x_split_batch, yy_pad
+    return x_split_batch_pad, yy_pad
 
 
 def lstm_train(
