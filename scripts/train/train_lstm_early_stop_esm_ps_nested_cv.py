@@ -28,7 +28,7 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv"
+out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_80_cv"
 model_dir = data_root / "raw" / "tcrpmhc"
 cluster_path = data_root / "clusterRes_cluster.tsv"
 
@@ -43,13 +43,13 @@ metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 unique_peptides = metadata["peptide"].unique()
 
 dataset = LSTMDataset(
-    data_dir=processed_dir / "proteinsolver_embeddings_pos", 
+    data_dir=processed_dir / "proteinsolver_esm_embeddings_pos", 
     annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
 )
 
 # LSTM params
 batch_size = 8
-embedding_dim = 128
+embedding_dim = 1280 + 128
 hidden_dim = 128 #128 #32
 num_layers = 2  # from 2
 
