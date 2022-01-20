@@ -131,7 +131,74 @@ def lstm_train(
     return model, train_losses, valid_losses
 
 
-def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split, out_fn=torch.sigmoid()):
+def lstm_embedding_test_train(
+    model,
+    epochs,
+    criterion,
+    optimizer,
+    scheduler,
+    dataset,
+    train_idx,
+    valid_idx,
+    batch_size,
+    device,
+    collate_fn=pad_collate_chain_split,
+    early_stopping=False,
+    verbose=False,
+    extra_print=None,
+):
+    train_losses = list()
+    valid_losses = list()
+    #epochs_since_last_improv = 0
+    best_valid_loss = float("inf") 
+    best_model = model.state_dict()
+
+    for e in range(epochs):
+        
+        train_sampler = BatchSampler(SubsetRandomSampler(train_idx), batch_size=batch_size, drop_last=True)
+        valid_sampler = BatchSampler(SubsetRandomSampler(valid_idx), batch_size=1, drop_last=False)
+        
+        train_loader = DataLoader(dataset=dataset, batch_sampler=train_sampler, collate_fn=collate_fn)
+        valid_loader = DataLoader(dataset=dataset, batch_sampler=valid_sampler, collate_fn=collate_fn)
+
+        train_len = len(train_loader)
+        valid_len = len(valid_loader)
+        
+        train_loss = 0
+        model.train()
+        j = 0
+        for xx, y in train_loader:    
+            y = y.to(device)
+            xx = xx.to(device)
+            y_pred = model(xx)
+            optimizer.zero_grad()
+            loss = criterion(y_pred, y.unsqueeze(1))
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.item()
+
+            if verbose:
+                display_func(j, train_len, e, train_losses, valid_losses, extra_print)
+            j += 1
+        
+        valid_loss = 0
+        model.eval()
+        with torch.no_grad():
+            for xx, y in valid_loader:
+                y = y.to(device)    
+                xx = xx.to(device)
+                y_pred = model(xx)
+                loss = criterion(y_pred, y.unsqueeze(1))
+                valid_loss += loss.item()
+        
+        scheduler.step()
+        train_losses.append(train_loss / train_len)
+        valid_losses.append(valid_loss / valid_len)
+
+    return model, train_losses, valid_losses
+
+
+def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split, out_fn=torch.sigmoid):
     data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
     pred = list()
     true = list()

@@ -82,7 +82,7 @@ for train_idx, test_idx in CV.split(dataset):
         lr_lambda=lambda epoch: lr_decay
     )
     
-    net, train_losses, valid_losses = lstm_train(
+    net, train_losses, valid_losses = lstm_embedding_test_train(
         net,
         epochs,
         criterion,
