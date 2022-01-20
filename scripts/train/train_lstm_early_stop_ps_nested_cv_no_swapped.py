@@ -70,11 +70,11 @@ pred_paths = touch_output_files(save_dir, "pred", n_splits)
 train_partitions, test_partitions = K_fold_CV_from_clusters(cluster_path, n_splits)
 
 filtered_indices = list(metadata[metadata["origin"] == "swapped"])
-for i in range(len(n_splits)):
-    train_part, valid_part = train_partitions[i], test_partitions[i]
+for j in range(n_splits):
+    train_part, valid_part = train_partitions[j], test_partitions[j]
     train_part = [i for i in train_part if i not in filtered_indices]
     valid_part = [i for i in valid_part if i not in filtered_indices]
-    train_partitions[i], test_partitions[i] = train_part, valid_part
+    train_partitions[j], test_partitions[j] = train_part, valid_part
 
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 

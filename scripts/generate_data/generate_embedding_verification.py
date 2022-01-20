@@ -127,6 +127,7 @@ gnn_func = gnn.forward_without_last_layer
 out_dir = processed_dir / "proteinsolver_embedding_verification"
 out_dir.mkdir(parents=True, exist_ok=True)
 
+overwrite = True
 targets = list()
 for i in range(len(dataset)):
     out_path = out_dir / f"data_{i}.pt"
@@ -134,7 +135,7 @@ for i in range(len(dataset)):
     if not out_path.is_file() or overwrite:
         with torch.no_grad():
             out = gnn_func(data.x, data.edge_index, data.edge_attr)
-        peptide_emb = out[data.chain_map[0] == "P"]  # idx 0 as we only have 1 batch
+        peptide_emb = out[data.chain_map == "P"]  # idx 0 as we only have 1 batch
         torch.save(peptide_emb, out_path)
     targets.append([data.y])
 torch.save(targets, out_dir / f"targets.pt")
