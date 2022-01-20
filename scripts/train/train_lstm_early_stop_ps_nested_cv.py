@@ -54,7 +54,7 @@ hidden_dim = 128 #128 #32
 num_layers = 2  # from 2
 
 # general params
-epochs = 150
+epochs = 15  # TODO set to 150 again!!!!!!!!!!
 learning_rate = 1e-4
 lr_decay = 0.99
 w_decay = 1e-3
@@ -116,10 +116,10 @@ for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
         best_inner_fold_valid_losses.append(min(valid_losses))
         inner_train_losses.append(train_losses)
         inner_valid_losses.append(valid_losses)
-        best_inner_fold_models.append(net)
+        best_inner_fold_models.append(net.state_dict())
 
     best_inner_idx = best_inner_fold_valid_losses.index(min(best_inner_fold_valid_losses))
-    net = best_inner_fold_models[best_inner_idx]
+    net = torch.load_state_dict(best_inner_fold_models[best_inner_idx])
     train_losses = inner_train_losses[best_inner_idx]
     valid_losses = inner_valid_losses[best_inner_idx]
 
