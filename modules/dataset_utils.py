@@ -169,7 +169,7 @@ def create_gnn_embeddings(
 
     out_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
     
-    data_loader = torch_geometric.loader.DataLoader(dataset, shuffle=False, batch_size=1)
+    data_loader = torch_geometric.loader.DataLoader(dataset, shuffle=False, batch_size=1)  # remove dataloader and just index dataset
     out_files = list()
     targets = list()
     for i, data in enumerate(data_loader):

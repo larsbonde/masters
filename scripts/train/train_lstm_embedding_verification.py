@@ -67,6 +67,7 @@ for train_idx, test_idx in CV.split(dataset):
         hidden_dim=hidden_dim, 
         num_layers=num_layers, 
         dropout=dropout,
+        output_dim=3,
     )
     net = net.to(device)
 

@@ -18,7 +18,7 @@ from torch_geometric.nn import global_mean_pool
 
 
 class MyLSTM(nn.Module):
-    def __init__(self,  embedding_dim, hidden_dim, num_layers, dropout=0.0):
+    def __init__(self,  embedding_dim, hidden_dim, num_layers, output_dim=1,  dropout=0.0):
         super(MyLSTM, self).__init__()
         
         self.num_layers = num_layers
@@ -36,7 +36,7 @@ class MyLSTM(nn.Module):
         self.linear_dropout = nn.Dropout(p=dropout)
         self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
         self.linear_1 = nn.Linear(hidden_dim * 2, hidden_dim)
-        self.linear_2 = nn.Linear(hidden_dim, 1)
+        self.linear_2 = nn.Linear(hidden_dim, output_dim)
         
         torch.nn.init.xavier_uniform_(self.linear_1.weight) 
         torch.nn.init.xavier_uniform_(self.linear_2.weight)    
