@@ -131,7 +131,7 @@ def lstm_train(
     return model, train_losses, valid_losses
 
 
-def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split):
+def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split, out_fn=torch.sigmoid()):
     data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
     pred = list()
     true = list()
@@ -145,6 +145,6 @@ def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split
             else:
                 xx = xx.to(device)
                 y_pred = model(xx)
-            pred.append(torch.sigmoid(y_pred))
+            pred.append(out_fn(y_pred))
             true.append(y)
     return torch.Tensor(pred), torch.Tensor(true)
