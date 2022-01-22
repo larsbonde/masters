@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 import numpy as np
+import copy
 from torch import nn, optim
 from torch.utils.data import Dataset, DataLoader
 from .utils import *
@@ -115,7 +116,7 @@ def lstm_train(
         valid_losses.append(valid_loss / valid_len)
 
         if valid_losses[-1] < best_valid_loss:
-            best_model = model.state_dict()
+            best_model = copy.deepcopy(model.state_dict())
             best_valid_loss = valid_losses[-1]
         #    epochs_since_last_improv = 0
         #else:
@@ -172,7 +173,7 @@ def lstm_embedding_test_train(
             xx = xx.to(device)
             y_pred = model(xx)
             optimizer.zero_grad()
-            loss = criterion(y_pred, y.unsqueeze(1))
+            loss = criterion(y_pred, y.long().squeeze(1))
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -188,7 +189,7 @@ def lstm_embedding_test_train(
                 y = y.to(device)    
                 xx = xx.to(device)
                 y_pred = model(xx)
-                loss = criterion(y_pred, y.unsqueeze(1))
+                loss = criterion(y_pred, y.long().squeeze(1))
                 valid_loss += loss.item()
         
         scheduler.step()
@@ -198,7 +199,7 @@ def lstm_embedding_test_train(
     return model, train_losses, valid_losses
 
 
-def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split, out_fn=torch.sigmoid):
+def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split):
     data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
     pred = list()
     true = list()
@@ -212,6 +213,21 @@ def lstm_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split
             else:
                 xx = xx.to(device)
                 y_pred = model(xx)
-            pred.append(out_fn(y_pred))
+            pred.append(torch.sigmoid(y_pred))
             true.append(y)
     return torch.Tensor(pred), torch.Tensor(true)
+
+
+def lstm_embedding_test_predict(model, dataset, idx, device, collate_fn=pad_collate_chain_split):
+    data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
+    pred = list()
+    true = list()
+    model.eval()
+    with torch.no_grad():
+        for xx, y in data_loader:
+            y = y.to(device)
+            xx = xx.to(device)
+            y_pred = model(xx)
+            pred.append(F.softmax(y_pred, dim=0))
+            true.append(y)
+    return pred, torch.Tensor(true)

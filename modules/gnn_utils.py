@@ -1,7 +1,7 @@
 import torch
 import torch_geometric
 import numpy as np
-
+import copy
 from .utils import *
 from torch.utils.data import SubsetRandomSampler, BatchSampler
 
@@ -68,7 +68,7 @@ def gnn_train(
         valid_losses.append(valid_loss / valid_len)
 
         if valid_losses[-1] < best_valid_loss:
-            best_model = model.state_dict()
+            best_model = copy.deepcopy(model.state_dict())
             best_valid_loss = valid_losses[-1]
             epochs_since_last_improv = 0
         else:

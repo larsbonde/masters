@@ -6,6 +6,7 @@ import torch
 import numpy as np
 import pandas as pd
 import modules
+import copy
 
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
 from torch import nn, optim
@@ -116,10 +117,12 @@ for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
         best_inner_fold_valid_losses.append(min(valid_losses))
         inner_train_losses.append(train_losses)
         inner_valid_losses.append(valid_losses)
-        best_inner_fold_models.append(net.state_dict())
+        best_inner_fold_models.append(copy.deepcopy(net.state_dict()))
 
     best_inner_idx = best_inner_fold_valid_losses.index(min(best_inner_fold_valid_losses))
-    net = torch.load_state_dict(best_inner_fold_models[best_inner_idx])
+    print(best_inner_fold_models[best_inner_idx])
+    print(net.state_dict())
+    net.load_state_dict(best_inner_fold_models[best_inner_idx])
     train_losses = inner_train_losses[best_inner_idx]
     valid_losses = inner_valid_losses[best_inner_idx]
 

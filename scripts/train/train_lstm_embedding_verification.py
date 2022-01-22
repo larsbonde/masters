@@ -100,13 +100,12 @@ for train_idx, test_idx in CV.split(dataset):
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = lstm_predict(
+    pred, true = lstm_embedding_test_predict(
         net, 
         dataset,
         test_idx, 
         device, 
         collate_fn=pad_collate, 
-        out_fn=torch.nn.Softmax(dim=0)
     )     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
