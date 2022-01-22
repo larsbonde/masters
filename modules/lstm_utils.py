@@ -228,6 +228,6 @@ def lstm_embedding_test_predict(model, dataset, idx, device, collate_fn=pad_coll
             y = y.to(device)
             xx = xx.to(device)
             y_pred = model(xx)
-            pred.append(F.softmax(y_pred, dim=0))
+            pred.append(F.softmax(y_pred, dim=1).squeeze(0).tolist())
             true.append(y)
     return pred, torch.Tensor(true)
