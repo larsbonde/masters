@@ -10,6 +10,7 @@ data/state_files/embedding_verification/*
 data/state_files/tcr_binding/*
 data/state_files/tcr_binding_baseline/*
 data/saved_state_files/*
+data/results/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
