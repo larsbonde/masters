@@ -132,6 +132,12 @@ def K_fold_CV_from_clusters(cluster_path, n_split=5):
         if i >= n_split:
             i = 0        
 
+   
+
+    return partitions
+
+
+def join_partitions(partitions):
     train_partitions = [list() for _ in range(n_split)]
     test_partitions = [list() for _ in range(n_split)]
 
@@ -139,8 +145,7 @@ def K_fold_CV_from_clusters(cluster_path, n_split=5):
         test_partitions[i] = partitions[i]
         for j in range(len(partitions)):
             if j != i:
-                train_partitions[i].extend(partitions[j])
-
+                train_partitions[i].append(partitions[j])
     return train_partitions, test_partitions
 
 
