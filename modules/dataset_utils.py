@@ -105,7 +105,7 @@ def generate_3_loo_partitions(metadata, drop_swapped=True, valid_pep="KTWGQYWQV"
     return loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides
 
 
-def K_fold_CV_from_clusters(cluster_path, n_split=5):
+def partition_clusters(cluster_path, n_split=5):
     """loads clusters from mmseqs2 clustering tsv formatted results"""
     clusters = dict()
     with open(cluster_path) as file:
@@ -132,12 +132,11 @@ def K_fold_CV_from_clusters(cluster_path, n_split=5):
         if i >= n_split:
             i = 0        
 
-   
-
     return partitions
 
 
 def join_partitions(partitions):
+    n_split = len(partitions)
     train_partitions = [list() for _ in range(n_split)]
     test_partitions = [list() for _ in range(n_split)]
 
