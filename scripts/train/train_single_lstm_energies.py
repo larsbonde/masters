@@ -29,7 +29,7 @@ processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 out_dir = root / "state_files" / "tcr_binding" / "lstm_single_energy"
 
-model_energy_dir = Path("/home/projects/ht3_aim/people/idamei/data/train_data")
+model_energies_dir = Path("/home/projects/ht3_aim/people/idamei/data/train_data")
 
 paths = list(model_energies_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -46,7 +46,7 @@ unique_peptides = metadata["peptide"].unique()
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 dataset = LSTMEnergyDataset(
-    paths=metadata["paths"],
+    paths=metadata["path"],
     targets=metadata[binder]
 )
 

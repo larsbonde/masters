@@ -30,14 +30,15 @@ metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 out_dir = root / "state_files" / "tcr_binding" / "lstm_single_energy_80_cv"
-model_dir = data_root / "raw" / "tcrpmhc"
 cluster_path = data_root / "clusterRes_cluster.tsv"
 
 n_splits = 5
 partitions = [list() for _ in range(n_splits)]
 targets = list()
 
-paths = list(model_dir.glob("*"))
+model_energies_dir = Path("/home/projects/ht3_aim/people/idamei/data/train_data")
+
+paths = list(model_energies_dir.glob("*"))
 for path in paths:
     split = str(path).split("_")
     

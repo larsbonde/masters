@@ -40,7 +40,6 @@ class LSTMEnergyDataset(torch.utils.data.Dataset):
         transform=None, 
         target_transform=None
     ):
-        self.data_dir = data_dir
         self.transform = transform
         self.target_transform = target_transform
         self.annotations = torch.Tensor(targts)
