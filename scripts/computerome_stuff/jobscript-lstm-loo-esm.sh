@@ -17,7 +17,7 @@
 #PBS -l mem=50GB
 ###
 ### How long (max) will the job take, here 24 hours
-#PBS -l walltime=150:00:00
+#PBS -l walltime=70:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/lstm_loo.py -m esm
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/lstm_loo.py -m esm

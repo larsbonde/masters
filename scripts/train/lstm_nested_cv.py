@@ -39,8 +39,8 @@ cluster_path = data_root / "clusterRes_cluster.tsv"
 model_dir = data_root / "raw" / "tcrpmhc"
 
 if args.mode == "ps":
-    data=processed_dir / "proteinsolver_embeddings_pos", 
-    targets=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    data = processed_dir / "proteinsolver_embeddings_pos", 
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv"
     batch_size = 8
     embedding_dim = 128
@@ -48,8 +48,8 @@ if args.mode == "ps":
     num_layers = 2 
 
 if args.mode == "esm":
-    data=processed_dir / "esm_embeddings_pos", 
-    targets=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    data = processed_dir / "esm_embeddings_pos", 
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_80_cv"
     batch_size = 8
     embedding_dim = 1280
