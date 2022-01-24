@@ -17,7 +17,7 @@
 #PBS -l mem=50GB
 ###
 ### How long (max) will the job take, here 24 hours
-#PBS -l walltime=150:00:00
+#PBS -l walltime=70:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names

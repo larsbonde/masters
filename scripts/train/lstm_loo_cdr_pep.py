@@ -39,7 +39,7 @@ model_dir = data_root / "raw" / "tcrpmhc"
 drop_swapped = True
 if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
-    data = processed_dir / "proteinsolver_embeddings_cdr_pep_only",
+    data = processed_dir / "proteinsolver_embeddings_cdr_pep_only"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_cdr_pep_only"
     batch_size = 8

@@ -37,7 +37,7 @@ state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 drop_swapped = True
 if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
-    data = processed_dir / "proteinsolver_embeddings_pos",
+    data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps"
     batch_size = 8
@@ -47,7 +47,7 @@ if args.mode == "ps":
 
 if args.mode == "esm":
     model_dir = data_root / "raw" / "tcrpmhc"
-    data = processed_dir / "esm_embeddings_pos", 
+    data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm"
     batch_size = 8
@@ -67,7 +67,7 @@ if args.mode == "esm_ps":
 
 if args.mode == "ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
-    data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair",
+    data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
     targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_foldx"
     batch_size = 8
@@ -78,7 +78,7 @@ if args.mode == "ps_foldx":
 if args.mode == "esm_ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
-    targets = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair" / "targets.pt"
+    targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_foldx"
     batch_size = 8
     embedding_dim = 1280 + 128
@@ -98,7 +98,7 @@ if args.mode == "ps_rosetta":
 if args.mode == "esm_ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
-    targets = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair" / "targets.pt"
+    targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_rosetta"
     batch_size = 8
     embedding_dim = 1280 + 128
