@@ -52,7 +52,7 @@ for path in paths:
     partitions[part].append(path)
 
 dataset = LSTMEnergyDataset(
-    paths=paths
+    paths=paths,
     targets=targets
 )
 

@@ -46,7 +46,7 @@ unique_peptides = metadata["peptide"].unique()
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
 
 dataset = LSTMEnergyDataset(
-    paths=metadata["paths"]
+    paths=metadata["paths"],
     targets=metadata[binder]
 )
 
