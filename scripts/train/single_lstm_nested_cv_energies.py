@@ -82,12 +82,6 @@ loss_paths = touch_output_files(save_dir, "loss", n_splits)
 state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
-if not args.swapped:
-    filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
-    for i in range(n_splits):
-        part = [j for j in partitions[i] if j not in filtered_indices]
-        partitions[i] = part
-
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 for i in range(n_splits):

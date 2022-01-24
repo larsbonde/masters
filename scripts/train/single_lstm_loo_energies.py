@@ -67,7 +67,7 @@ loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides
 
 dataset = LSTMEnergyDataset(
     paths=metadata["path"],
-    targets=metadata[binder]
+    targets=metadata["binder"]
 )
 
 # general params

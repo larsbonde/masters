@@ -42,18 +42,21 @@ class LSTMEnergyDataset(torch.utils.data.Dataset):
     ):
         self.transform = transform
         self.target_transform = target_transform
-        self.annotations = torch.Tensor(targts)
+        self.annotations = torch.Tensor(targets).unsqueeze(1)
         self.paths = paths
 
     def __len__(self):
         return len(self.annotations)
 
     def __getitem__(self, idx):
-        x = np.load(self.paths[idx])
+        if type(idx) == int:
+            x = np.load(self.paths[idx])
+        else:
+            x = np.load(idx)
         time_idx = [92, 116, 140]  # time variables to be removed
         for idx in time_idx:
             x[:,idx] = 0.0
-        x = torch.from_numpy(x)
+        x = torch.from_numpy(x).float()
         y = self.annotations[idx]
         return x, y
 
