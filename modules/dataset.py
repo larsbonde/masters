@@ -3,6 +3,7 @@ import kmbio  # fork of biopython PDB with some changes in how the structure, ch
 import proteinsolver
 import torch
 import torch_geometric
+import numpy as np
 from pathlib import Path
 from joblib import Parallel, delayed
 from .dataset_utils import*
@@ -27,6 +28,33 @@ class LSTMDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         x = torch.load(f"{self.data_dir}/data_{idx}.pt")
+        y = self.annotations[idx]
+        return x, y
+
+
+class LSTMEnergyDataset(torch.utils.data.Dataset):
+    def __init__(
+        self, 
+        paths, 
+        targets, 
+        transform=None, 
+        target_transform=None
+    ):
+        self.data_dir = data_dir
+        self.transform = transform
+        self.target_transform = target_transform
+        self.annotations = torch.Tensor(targts)
+        self.paths = paths
+
+    def __len__(self):
+        return len(self.annotations)
+
+    def __getitem__(self, idx):
+        x = np.load(self.paths[idx])
+        time_idx = [92, 116, 140]  # time variables to be removed
+        for idx in time_idx:
+            x[:,idx] = 0.0
+        x = torch.from_numpy(x)
         y = self.annotations[idx]
         return x, y
 
