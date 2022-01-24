@@ -23,8 +23,8 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "mode", default="default")
-parser.add_argument("-s", "swapped", action="store_true", default=True)
+parser.add_argument("-m", "--mode", default="default")
+parser.add_argument("-s", "--swapped", action="store_true", default=False)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -40,9 +40,8 @@ if args.mode == "default":
     model_dir = data_root / "raw" / "tcrpmhc"
     proc_dir = processed_dir / "proteinsolver_preprocess"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_80_cv"
-
-if not args.swapped:
-    out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
+if args.swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -54,7 +53,6 @@ metadata = metadata.reset_index(drop=True)
 
 raw_files = np.array(metadata["path"])
 targets = np.array(metadata["binder"])
-
 dataset = ProteinDataset(
     proc_dir, 
     raw_files, 
@@ -69,7 +67,7 @@ hidden_size = 128
 
 # general params
 batch_size = 8
-epochs = 600
+epochs = 300
 learning_rate = 1e-5
 lr_decay = 0.999
 w_decay = 1e-3
@@ -82,6 +80,12 @@ state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
 partitions = partition_clusters(cluster_path, n_splits)
+
+if not args.swapped:
+    filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
+    for i in range(n_splits):
+        part = [j for j in partitions[i] if j not in filtered_indices]
+        partitions[i] = part
 
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 

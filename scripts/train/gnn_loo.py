@@ -6,6 +6,7 @@ import torch
 import numpy as np
 import pandas as pd
 import modules
+import argparse
 
 from torch.utils.data import SubsetRandomSampler, BatchSampler
 from torch import nn, optim
@@ -20,6 +21,11 @@ from modules.gnn_utils import *
 np.random.seed(0)
 torch.manual_seed(0)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--mode", default="default")
+parser.add_argument("-s", "--swapped", action="store_true", default=False)
+args = parser.parse_args()
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
@@ -27,8 +33,26 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_rosetta"
-model_dir = data_root / "raw" / "rosetta_repair"
+
+drop_swapped = True
+if args.mode == "default"
+    model_dir = data_root / "raw" / "tcrpmhc"
+    proc_dir = processed_dir / "proteinsolver_preprocess"
+    out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune"
+
+if args.mode == "foldx"
+    model_dir = data_root / "raw" / "foldx_repair"
+    proc_dir = processed_dir / "proteinsolver_preprocess_foldx_repair"
+    out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_foldx"
+
+if args.mode == "rosetta"
+    model_dir = data_root / "raw" / "rosetta_repair"
+    proc_dir = processed_dir / "proteinsolver_preprocess_rosetta_repair"
+    out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_rosetta"
+
+if args.swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
+    drop_swapped = False
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -41,13 +65,17 @@ metadata = metadata.reset_index(drop=True)
 raw_files = np.array(metadata["path"])
 targets = np.array(metadata["binder"])
 dataset = ProteinDataset(
-    processed_dir / "proteinsolver_preprocess_rosetta_repair", 
+    proc_dir, 
     raw_files, 
     targets, 
     overwrite=False
 )
 
-loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(metadata, valid_pep="KTWGQYWQV")
+loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(
+    metadata, 
+    drop_swapped=drop_swapped,
+    valid_pep="KTWGQYWQV"
+    )
 
 # GNN params
 num_features = 20
@@ -56,7 +84,7 @@ hidden_size = 128
 
 # general params
 batch_size = 8
-epochs = 600
+epochs = 300
 learning_rate = 1e-5
 lr_decay = 0.999
 w_decay = 1e-3

@@ -23,6 +23,11 @@ from modules.lstm_utils import *
 np.random.seed(0)
 torch.manual_seed(0)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--mode", default="default")
+parser.add_argument("-s", "--swapped", action="store_true", default=False)
+args = parser.parse_args()
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
@@ -76,6 +81,12 @@ save_dir = get_non_dupe_dir(out_dir)
 loss_paths = touch_output_files(save_dir, "loss", n_splits)
 state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
+
+if not args.swapped:
+    filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
+    for i in range(n_splits):
+        part = [j for j in partitions[i] if j not in filtered_indices]
+        partitions[i] = part
 
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
