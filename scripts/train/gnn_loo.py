@@ -35,17 +35,17 @@ processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 
 drop_swapped = True
-if args.mode == "default"
+if args.mode == "default":
     model_dir = data_root / "raw" / "tcrpmhc"
     proc_dir = processed_dir / "proteinsolver_preprocess"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune"
 
-if args.mode == "foldx"
+if args.mode == "foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     proc_dir = processed_dir / "proteinsolver_preprocess_foldx_repair"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_foldx"
 
-if args.mode == "rosetta"
+if args.mode == "rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     proc_dir = processed_dir / "proteinsolver_preprocess_rosetta_repair"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_rosetta"
