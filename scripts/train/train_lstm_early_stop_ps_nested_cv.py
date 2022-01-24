@@ -74,12 +74,16 @@ extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 for i in range(n_splits):
     test_idx = partitions[i]
-    outer_train_idx = [partitions[j] for j in range(n_splits) if j != i]
+    outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
+    inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
+    print(len(outer_train_folds), len(inner_train_partitions), len(inner_valid_partitions))
+    print(inner_train_partitions, inner_valid_partitions)
+
     best_inner_fold_valid_losses = list()
     inner_train_losses = list()
     inner_valid_losses = list()
     best_inner_fold_models = list()    
-    for train_idx, valid_idx in join_partitions(outer_train_idx):
+    for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
         net = QuadLSTM(
             embedding_dim=embedding_dim, 
             hidden_dim=hidden_dim, 

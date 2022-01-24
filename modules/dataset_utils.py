@@ -144,7 +144,7 @@ def join_partitions(partitions):
         test_partitions[i] = partitions[i]
         for j in range(len(partitions)):
             if j != i:
-                train_partitions[i].append(partitions[j])
+                train_partitions[i].extend(partitions[j])
     return train_partitions, test_partitions
 
 
