@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/train_lstm_early_stop_ps_cdr_pep.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/lstm_loo_cdr_pep.py -m ps

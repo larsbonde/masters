@@ -28,7 +28,7 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_80_cv"
+out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_80_cv"
 model_dir = data_root / "raw" / "tcrpmhc"
 cluster_path = data_root / "clusterRes_cluster.tsv"
 
@@ -43,18 +43,18 @@ metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 unique_peptides = metadata["peptide"].unique()
 
 dataset = LSTMDataset(
-    data_dir=processed_dir / "esm_embeddings_pos", 
+    data_dir=processed_dir / "proteinsolver_esm_embeddings_pos", 
     annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
 )
 
 # LSTM params
 batch_size = 8
-embedding_dim = 1280
+embedding_dim = 1280 + 128
 hidden_dim = 128 #128 #32
 num_layers = 2  # from 2
 
 # general params
-epochs = 150
+epochs = 100
 learning_rate = 1e-4
 lr_decay = 0.99
 w_decay = 1e-3
@@ -67,18 +67,20 @@ loss_paths = touch_output_files(save_dir, "loss", n_splits)
 state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
-train_partitions, test_partitions = K_fold_CV_from_clusters(cluster_path, n_splits)
+partitions = partition_clusters(cluster_path, n_splits)
 
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
-i = 0
-for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
+for i in range(n_splits):
     best_inner_fold_valid_losses = list()
     inner_train_losses = list()
     inner_valid_losses = list()
     best_inner_fold_models = list()
-    CV = KFold(n_splits=n_splits, shuffle=True)
-    for train_idx, valid_idx in CV.split(outer_train_idx):
+
+    test_idx = partitions[i]
+    outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
+    inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
+    for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
         net = QuadLSTM(
             embedding_dim=embedding_dim, 
             hidden_dim=hidden_dim, 
@@ -116,10 +118,11 @@ for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
         best_inner_fold_valid_losses.append(min(valid_losses))
         inner_train_losses.append(train_losses)
         inner_valid_losses.append(valid_losses)
-        best_inner_fold_models.append(net)
+        best_inner_fold_models.append(copy.deepcopy(net.state_dict()))
 
     best_inner_idx = best_inner_fold_valid_losses.index(min(best_inner_fold_valid_losses))
-    net = best_inner_fold_models[best_inner_idx]
+
+    net.load_state_dict(best_inner_fold_models[best_inner_idx])
     train_losses = inner_train_losses[best_inner_idx]
     valid_losses = inner_valid_losses[best_inner_idx]
 
@@ -128,5 +131,3 @@ for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
     
     pred, true = lstm_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
-    
-    i += 1

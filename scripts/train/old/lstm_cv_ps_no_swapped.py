@@ -6,7 +6,6 @@ import torch
 import numpy as np
 import pandas as pd
 import modules
-import copy
 
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
 from torch import nn, optim
@@ -29,66 +28,65 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "lstm_single_energy_80_cv"
+out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv_no_swapped"
+model_dir = data_root / "raw" / "tcrpmhc"
 cluster_path = data_root / "clusterRes_cluster.tsv"
 
-n_splits = 5
-partitions = [list() for _ in range(n_splits)]
-targets = list()
+paths = list(model_dir.glob("*"))
+join_key = [int(x.name.split("_")[0]) for x in paths]
+path_df = pd.DataFrame({'#ID': join_key, 'path': paths})
 
-model_energies_dir = Path("/home/projects/ht3_aim/people/idamei/data/train_data")
+metadata = pd.read_csv(metadata_path)
+metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
+metadata = metadata.reset_index(drop=True)
+metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
+unique_peptides = metadata["peptide"].unique()
 
-paths = list(model_energies_dir.glob("*"))
-for path in paths:
-    split = str(path).split("_")
-    
-    bind_str = split[-2]
-    if bind_str == "pos":
-        bind = 1
-    else:
-        bind = 0
-    targets.append(bind)
-    
-    part = int(split[-3][0]) - 1
-    partitions[part].append(path)
-
-dataset = LSTMEnergyDataset(
-    paths=paths,
-    targets=targets
+dataset = LSTMDataset(
+    data_dir=processed_dir / "proteinsolver_embeddings_pos", 
+    annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
 )
 
 # LSTM params
 batch_size = 8
-embedding_dim = 142
-hidden_dim = 256 #128 #32
+embedding_dim = 128
+hidden_dim = 128 #128 #32
 num_layers = 2  # from 2
 
 # general params
-epochs = 15  # TODO set to 150 again!!!!!!!!!!
+epochs = 150
 learning_rate = 1e-4
 lr_decay = 0.99
 w_decay = 1e-3
 dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
 # touch files to ensure output
+n_splits = 5
 save_dir = get_non_dupe_dir(out_dir)
 loss_paths = touch_output_files(save_dir, "loss", n_splits)
 state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
+partitions = partition_clusters(cluster_path, n_splits)
+
+filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
+for i in range(n_splits):
+    part = [j for j in partitions[i] if j not in filtered_indices]
+    partitions[i] = part
+
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 for i in range(n_splits):
-    test_idx = partitions[i]
-    outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
-    inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
-
     best_inner_fold_valid_losses = list()
     inner_train_losses = list()
     inner_valid_losses = list()
-    best_inner_fold_models = list()    
+    best_inner_fold_models = list()
+
+    test_idx = partitions[i]
+    outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
+    inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
     for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
-        net = MyLSTM(
+        net = QuadLSTM(
             embedding_dim=embedding_dim, 
             hidden_dim=hidden_dim, 
             num_layers=num_layers, 
@@ -118,8 +116,7 @@ for i in range(n_splits):
             valid_idx,
             batch_size,
             device,
-            collate_fn=pad_collate,
-            #extra_print=extra_print_str.format(save_dir, i, unique_peptides[i]),
+            extra_print=extra_print_str.format(save_dir, i, unique_peptides[i]),
             early_stopping=True,
         )
 
@@ -137,5 +134,5 @@ for i in range(n_splits):
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = lstm_predict(net, dataset, test_idx, device, collate_fn=pad_collate)     
+    pred, true = lstm_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])

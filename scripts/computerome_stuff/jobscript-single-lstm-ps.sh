@@ -26,7 +26,7 @@
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N lstm_ps
+#PBS -N lstm_single_ps
 ###
 ### More qsub options can be added here
 
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train_lstm_early_stop.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/single_lstm_loo.py -m ps

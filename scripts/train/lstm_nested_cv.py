@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import modules
 import copy
+import argparse
 
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
 from torch import nn, optim
@@ -22,6 +23,11 @@ from modules.lstm_utils import *
 np.random.seed(0)
 torch.manual_seed(0)
 
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "mode")
+parser.add_argument("-s", "swapped", action="store_true", default=False)
+args = parser.parse_args()
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
@@ -29,9 +35,38 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv"
-model_dir = data_root / "raw" / "tcrpmhc"
 cluster_path = data_root / "clusterRes_cluster.tsv"
+model_dir = data_root / "raw" / "tcrpmhc"
+
+if args.mode == "ps":
+    data=processed_dir / "proteinsolver_embeddings_pos", 
+    targets=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
+if args.mode == "esm":
+    data=processed_dir / "esm_embeddings_pos", 
+    targets=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_80_cv"
+    batch_size = 8
+    embedding_dim = 1280
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "esm_ps":
+    data = processed_dir / "proteinsolver_esm_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_80_cv"
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -44,18 +79,12 @@ metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 unique_peptides = metadata["peptide"].unique()
 
 dataset = LSTMDataset(
-    data_dir=processed_dir / "proteinsolver_embeddings_pos", 
-    annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    data_dir=data, 
+    annotations_path=targets
 )
 
-# LSTM params
-batch_size = 8
-embedding_dim = 128
-hidden_dim = 128 #128 #32
-num_layers = 2  # from 2
-
 # general params
-epochs = 15  # TODO set to 150 again!!!!!!!!!!
+epochs = 100
 learning_rate = 1e-4
 lr_decay = 0.99
 w_decay = 1e-3
@@ -70,19 +99,23 @@ pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
 partitions = partition_clusters(cluster_path, n_splits)
 
+if not args.swapped:
+    filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
+    for i in range(n_splits):
+        part = [j for j in partitions[i] if j not in filtered_indices]
+        partitions[i] = part
+
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 for i in range(n_splits):
-    test_idx = partitions[i]
-    outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
-    inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
-    print(len(outer_train_folds), len(inner_train_partitions), len(inner_valid_partitions))
-    print(inner_train_partitions, inner_valid_partitions)
-
     best_inner_fold_valid_losses = list()
     inner_train_losses = list()
     inner_valid_losses = list()
-    best_inner_fold_models = list()    
+    best_inner_fold_models = list()
+
+    test_idx = partitions[i]
+    outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
+    inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
     for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
         net = QuadLSTM(
             embedding_dim=embedding_dim, 

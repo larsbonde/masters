@@ -6,8 +6,9 @@ import torch
 import numpy as np
 import pandas as pd
 import modules
+import argparse
 
-from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler, BatchSampler
+from torch.utils.data import SubsetRandomSampler, BatchSampler
 from torch import nn, optim
 from pathlib import Path
 from sklearn.model_selection import KFold
@@ -16,21 +17,32 @@ from modules.dataset_utils import *
 from modules.dataset import *
 from modules.utils import *
 from modules.models import *
-from modules.lstm_utils import *
+from modules.gnn_utils import *
 
 np.random.seed(0)
 torch.manual_seed(0)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "mode", default="default")
+parser.add_argument("-s", "swapped", action="store_true", default=True)
+args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 root = Path("/home/projects/ht3_aim/people/sebdel/masters/data/")
 data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
-processed_dir = data_root / "processed" 
+processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv_no_swapped"
-model_dir = data_root / "raw" / "tcrpmhc"
 cluster_path = data_root / "clusterRes_cluster.tsv"
+
+if args.mode == "default":
+    model_dir = data_root / "raw" / "tcrpmhc"
+    proc_dir = processed_dir / "proteinsolver_preprocess"
+    out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_80_cv"
+
+if not args.swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -39,26 +51,28 @@ path_df = pd.DataFrame({'#ID': join_key, 'path': paths})
 metadata = pd.read_csv(metadata_path)
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
 metadata = metadata.reset_index(drop=True)
-metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
-unique_peptides = metadata["peptide"].unique()
 
-dataset = LSTMDataset(
-    data_dir=processed_dir / "proteinsolver_embeddings_pos", 
-    annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+raw_files = np.array(metadata["path"])
+targets = np.array(metadata["binder"])
+
+dataset = ProteinDataset(
+    proc_dir, 
+    raw_files, 
+    targets, 
+    overwrite=False
 )
 
-# LSTM params
-batch_size = 8
-embedding_dim = 128
-hidden_dim = 128 #128 #32
-num_layers = 2  # from 2
+# GNN params
+num_features = 20
+adj_input_size = 2
+hidden_size = 128
 
 # general params
-epochs = 150
-learning_rate = 1e-4
-lr_decay = 0.99
+batch_size = 8
+epochs = 600
+learning_rate = 1e-5
+lr_decay = 0.999
 w_decay = 1e-3
-dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
 # touch files to ensure output
 n_splits = 5
@@ -67,31 +81,28 @@ loss_paths = touch_output_files(save_dir, "loss", n_splits)
 state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
-train_partitions, test_partitions = K_fold_CV_from_clusters(cluster_path, n_splits)
-
-filtered_indices = list(metadata[metadata["origin"] == "swapped"])
-for j in range(n_splits):
-    train_part, valid_part = train_partitions[j], test_partitions[j]
-    train_part = [i for i in train_part if i not in filtered_indices]
-    valid_part = [i for i in valid_part if i not in filtered_indices]
-    train_partitions[j], test_partitions[j] = train_part, valid_part
+partitions = partition_clusters(cluster_path, n_splits)
 
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
-i = 0
-for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
+for i in range(n_splits):
     best_inner_fold_valid_losses = list()
     inner_train_losses = list()
     inner_valid_losses = list()
     best_inner_fold_models = list()
-    CV = KFold(n_splits=n_splits, shuffle=True)
-    for train_idx, valid_idx in CV.split(outer_train_idx):
-        net = QuadLSTM(
-            embedding_dim=embedding_dim, 
-            hidden_dim=hidden_dim, 
-            num_layers=num_layers, 
-            dropout=dropout,
+
+    test_idx = partitions[i]
+    outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
+    inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
+    for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
+        net = MyGNN(
+            x_input_size=num_features + 1, 
+            adj_input_size=adj_input_size, 
+            hidden_size=hidden_size, 
+            output_size=num_features
         )
+        net.load_state_dict(torch.load(state_file, map_location=device))
+        net.linear_out = nn.Linear(hidden_size, 1)  # rewrite final layer to scalar output
         net = net.to(device)
 
         criterion = nn.BCEWithLogitsLoss()
@@ -99,13 +110,13 @@ for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
             net.parameters(), 
             lr=learning_rate, 
             weight_decay=w_decay,
-        )
+        ) 
         scheduler = optim.lr_scheduler.MultiplicativeLR(
             optimizer, 
             lr_lambda=lambda epoch: lr_decay
         )
         
-        net, train_losses, valid_losses = lstm_train(
+        net, train_losses, valid_losses = gnn_train(
             net,
             epochs,
             criterion,
@@ -116,24 +127,23 @@ for outer_train_idx, test_idx in zip(train_partitions, test_partitions):
             valid_idx,
             batch_size,
             device,
-            extra_print=extra_print_str.format(save_dir, i, unique_peptides[i]),
             early_stopping=True,
         )
 
         best_inner_fold_valid_losses.append(min(valid_losses))
         inner_train_losses.append(train_losses)
         inner_valid_losses.append(valid_losses)
-        best_inner_fold_models.append(net)
+        best_inner_fold_models.append(copy.deepcopy(net.state_dict()))
 
     best_inner_idx = best_inner_fold_valid_losses.index(min(best_inner_fold_valid_losses))
-    net = best_inner_fold_models[best_inner_idx]
+    net.load_state_dict(best_inner_fold_models[best_inner_idx])
     train_losses = inner_train_losses[best_inner_idx]
     valid_losses = inner_valid_losses[best_inner_idx]
 
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = lstm_predict(net, dataset, test_idx, device)     
+    pred, true = gnn_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
     i += 1

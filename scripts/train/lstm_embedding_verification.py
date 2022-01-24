@@ -44,7 +44,7 @@ num_layers = 2  # from 2
 
 # general params
 n_splits = 5
-epochs = 150
+epochs = 100
 learning_rate = 1e-4
 lr_decay = 0.99
 w_decay = 1e-3
