@@ -11,6 +11,8 @@ data/state_files/tcr_binding/*
 data/state_files/tcr_binding_baseline/*
 data/saved_state_files/*
 data/results/*
+data/state_files/old_2/*
+data/state_files/old_2
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

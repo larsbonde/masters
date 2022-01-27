@@ -45,7 +45,7 @@ targets = list()
 model_energies_dir = Path("/home/projects/ht3_aim/people/idamei/data/train_data")
 
 paths = list(model_energies_dir.glob("*"))
-for path in paths:
+for i, path in enumerate(paths):
     split = str(path).split("_")
     
     bind_str = split[-2]
@@ -54,9 +54,8 @@ for path in paths:
     else:
         bind = 0
     targets.append(bind)
-    
     part = int(split[-3][0]) - 1
-    partitions[part].append(path)
+    partitions[part].append(i)
 
 dataset = LSTMEnergyDataset(
     paths=paths,
