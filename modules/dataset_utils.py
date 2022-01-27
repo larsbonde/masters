@@ -29,7 +29,7 @@ def filter_peptides(partition_1, partition_2, unique_peptides, filtered_peptides
     return partition_1, partition_2, unique_peptides
 
 
-def generate_2_loo_partitions(metadata):
+def generate_loo_partitions(metadata):
     """
     Generates leave-one-out partitions given a df with metadata
     """
@@ -37,30 +37,80 @@ def generate_2_loo_partitions(metadata):
 
     metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
     loo_train_partitions = list()
-    loo_valid_partitions = list()
+    loo_test_partitions = list()
     for pep in unique_peptides:
-        valid_df = metadata[metadata["peptide"] == pep]
-        valid_unique_cdr = valid_df["merged_chains"].unique()
+        test_df = metadata[metadata["peptide"] == pep]
+        test_df = test_df[test_df["origin"] != "swapped"]
+        test_unique_cdr = test_df["merged_chains"].unique()
 
         # get training rows and drop swapped data
         train_df = metadata[metadata["peptide"] != pep]
-        train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(valid_unique_cdr))]
+        train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
 
         loo_train_partitions.append(list(train_df.index))
-        loo_valid_partitions.append(list(valid_df.index))
+        loo_test_partitions.append(list(test_df.index))
 
-   # hacky dataset fix
-    loo_train_partitions, loo_valid_partitions, unique_peptides = filter_peptides(
+    # hacky dataset fix
+    loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
         loo_train_partitions, 
-        loo_valid_partitions,
+        loo_test_partitions,
         unique_peptides,
         ["CLGGLLTMV", "ILKEPVHGV"],
         metadata,
     )
-    return loo_train_partitions, loo_valid_partitions, unique_peptides
+    return loo_train_partitions, loo_test_partitions, unique_peptides
 
 
-def generate_3_loo_partitions(metadata, drop_swapped=True, valid_pep="KTWGQYWQV"):
+def generate_3_loo_partitions(metadata, drop_swapped=True):
+    """
+    Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data as default.
+    """
+    #if drop_swapped:    
+    #    metadata = metadata[metadata["origin"] != "swapped"]
+    unique_peptides = metadata["peptide"].unique()
+    unique_peptides = np.delete(unique_peptides, np.where(unique_peptides == valid_pep))
+    
+    metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
+    
+    loo_train_partitions = list()
+    loo_test_partitions = list()
+    loo_valid_partitions = list()
+
+    for pep in unique_peptides:
+        test_df = metadata[metadata["peptide"] == pep]
+        test_df = test_df[test_df["origin"] == "swapped"]
+        test_unique_cdr = test_df["merged_chains"].unique()
+
+        #valid_df = metadata[metadata["peptide"] == valid_pep]
+        #if not drop_swapped:
+        #    valid_df = valid_df[~valid_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
+        #    valid_unique_cdr = valid_df["merged_chains"].unique()
+
+        #train_df = metadata[(metadata["peptide"] != pep) & (metadata["peptide"] != valid_pep)]
+        
+        
+        train_df = metadata[metadata["peptide"] != pep]
+        if not drop_swapped:
+            train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
+            train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(valid_unique_cdr))]
+
+
+        loo_train_partitions.append(list(train_df.index))
+        loo_test_partitions.append(list(test_df.index))
+        loo_valid_partitions.append(list(valid_df.index))
+
+    # hacky dataset fix
+    loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
+        loo_train_partitions, 
+        loo_test_partitions,
+        unique_peptides,
+        ["CLGGLLTMV", "ILKEPVHGV"],
+        metadata,
+    )
+    return loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides
+
+
+def generate_3_loo_partitions_single_valid_peptide(metadata, drop_swapped=True, valid_pep="KTWGQYWQV"):
     """
     Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data as default.
     """

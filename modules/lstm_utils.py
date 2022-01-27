@@ -231,3 +231,22 @@ def lstm_embedding_test_predict(model, dataset, idx, device, collate_fn=pad_coll
             pred.append(F.softmax(y_pred, dim=1).squeeze(0).tolist())
             true.append(y)
     return pred, torch.Tensor(true)
+
+
+def ensemble_lstm_predict(ensemble, dataset, idx, device, collate_fn=pad_collate_chain_split):
+    data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
+    pred = list()
+    true = list()
+    model.eval()
+    with torch.no_grad():
+        for xx, y in data_loader:
+            y = y.to(device)    
+            if type(xx) == list:
+                xx = (x.to(device) for x in xx)
+                y_pred = torch.mean(torch.Tensor([torch.sigmoid(model(*xx)) for model in ensemble]))
+            else:
+                xx = xx.to(device)
+                y_pred = torch.mean(torch.Tensor([torch.sigmoid(model(xx)) for model in ensemble]))
+            pred.append(y_pred)
+            true.append(y)
+    return torch.Tensor(pred), torch.Tensor(true)
