@@ -186,7 +186,7 @@ for outer_train_idx, test_idx in zip(outer_train_partitions, test_partitions):
         model_ensemble.append(copy.deepcopy(net.state_dict()))
     
     ensemble_states = dict()
-    for j, net in model_ensemble:
+    for j, net in enumerate(model_ensemble):
         ensemble_states[j] = net.state_dict()
 
     torch.save(ensemble_states, state_paths[i])

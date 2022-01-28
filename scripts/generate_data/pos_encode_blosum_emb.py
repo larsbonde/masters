@@ -63,8 +63,7 @@ for i, seq in enumerate(lines[1:]):
     for res in seq:
         blosum_enc = torch.Tensor(blosum_encode_dict[res])
         data.append(blosum_enc)
-    data = torch.Tensor(blosum_enc)
+    data = torch.stack(data)
     gnn_emb = dataset[i][0]  # get pos enc
-    
     esm_out = torch.hstack((data, gnn_emb[:,-4:]))
     torch.save(esm_out, new_esm_dir / f"data_{i}.pt")

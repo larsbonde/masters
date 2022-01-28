@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3_seqs.fsa clusterRes tmp --min-seq-id 0.8 -c 0.8 --cov-mode 1
+mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3b_seqs.fsa clusterRes_cdr3b tmp --min-seq-id 0.8 -c 0.8 --cov-mode 1

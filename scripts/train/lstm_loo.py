@@ -107,7 +107,7 @@ if args.mode == "esm_ps_rosetta":
 
 if args.mode == "blosum":
     data = processed_dir / "blosum_embeddings_pos"
-    targets = processed_dir / "blosum_embeddings_pos" / "targets.pt"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_blosum"
     batch_size = 8
     embedding_dim = 21
