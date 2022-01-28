@@ -237,7 +237,7 @@ def ensemble_lstm_predict(ensemble, dataset, idx, device, collate_fn=pad_collate
     data_loader = DataLoader(dataset=dataset, sampler=idx, batch_size=1, collate_fn=collate_fn)
     pred = list()
     true = list()
-    model.eval()
+    ensemble = [model.eval() for model in ensemble]
     with torch.no_grad():
         for xx, y in data_loader:
             y = y.to(device)    
