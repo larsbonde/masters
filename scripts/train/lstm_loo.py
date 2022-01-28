@@ -105,6 +105,15 @@ if args.mode == "esm_ps_rosetta":
     hidden_dim = 128 
     num_layers = 2
 
+if args.mode == "blosum":
+    data = processed_dir / "blosum_embeddings_pos"
+    targets = processed_dir / "blosum_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_blosum"
+    batch_size = 8
+    embedding_dim = 21
+    hidden_dim = 128 
+    num_layers = 2
+
 if args.swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_swapped")
     drop_swapped = False

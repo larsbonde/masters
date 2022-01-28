@@ -26,6 +26,7 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode")
 parser.add_argument("-s", "--swapped", action="store_true", default=False)
+parser.add_argument("-c", "--cluster", default="cdr3ab")
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -35,7 +36,6 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-cluster_path = data_root / "clusterRes_cluster.tsv"
 model_dir = data_root / "raw" / "tcrpmhc"
 
 if args.mode == "ps":
@@ -64,9 +64,25 @@ if args.mode == "esm_ps":
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
+    
+if args.mode == "blosum":
+    data = processed_dir / "blosum_embeddings_pos"
+    targets = processed_dir / "blosum_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_blosum_80_cv"
+    batch_size = 8
+    embedding_dim = 21
+    hidden_dim = 128 
+    num_layers = 2
 
 if args.swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_swapped")
+
+if args.cluster == "cdr3ab":
+    cluster_path = data_root / "clusterRes_cluster.tsv"
+    out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
+if args.cluster == "cdr3b":
+    cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
+    out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
