@@ -39,8 +39,8 @@ if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_nested_loo"
+    batch_size = 16
     embedding_dim = 128
     hidden_dim = 128
     num_layers = 2 
@@ -49,8 +49,8 @@ if args.mode == "esm":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_nested_loo"
+    batch_size = 16
     embedding_dim = 1280
     hidden_dim = 128 
     num_layers = 2
@@ -59,8 +59,8 @@ if args.mode == "esm_ps":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_nested_loo"
+    batch_size = 16
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
@@ -69,8 +69,8 @@ if args.mode == "ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
     targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_foldx"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_foldx_nested_loo"
+    batch_size = 16
     embedding_dim = 128
     hidden_dim = 128
     num_layers = 2 
@@ -79,8 +79,8 @@ if args.mode == "esm_ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_foldx"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_foldx_nested_loo"
+    batch_size = 16
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
@@ -89,8 +89,8 @@ if args.mode == "ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_rosetta"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_rosetta_nested_loo"
+    batch_size = 16
     embedding_dim = 128
     hidden_dim = 128 
     num_layers = 2
@@ -99,8 +99,8 @@ if args.mode == "esm_ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_rosetta"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_rosetta_nested_loo"
+    batch_size = 16
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
@@ -125,7 +125,7 @@ dataset = LSTMDataset(
 )
 
 # general params
-epochs = 10
+epochs = 2
 learning_rate = 1e-4
 lr_decay = 0.99
 w_decay = 1e-3
@@ -146,7 +146,7 @@ i = 0
 for outer_train_idx, test_idx in zip(outer_train_partitions, test_partitions):
     inner_metadata = metadata.iloc[outer_train_idx].copy(deep=True)
     inner_train_partitions, inner_valid_partitions, _ = generate_loo_partitions(inner_metadata)
-    model_ensemble = list()
+    state_ensemble = list()
     for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
     
         net = QuadLSTM(
@@ -183,11 +183,23 @@ for outer_train_idx, test_idx in zip(outer_train_partitions, test_partitions):
             early_stopping=True,
         )
 
-        model_ensemble.append(copy.deepcopy(net.state_dict()))
+        state_ensemble.append(copy.deepcopy(net.state_dict()))
     
     ensemble_states = dict()
-    for j, net in enumerate(model_ensemble):
-        ensemble_states[j] = net.state_dict()
+    for j, net_state_dict in state_ensemble:
+        ensemble_states[j] = net_state_dict
+    
+    model_ensemble = [
+        QuadLSTM(
+            embedding_dim=embedding_dim, 
+            hidden_dim=hidden_dim, 
+            num_layers=num_layers, 
+            dropout=dropout,
+        ) for _ in state_ensemble
+    ]
+
+    for model, state in zip(model_ensemble, state_ensemble):
+        model.to(device).load_state_dict(state)
 
     torch.save(ensemble_states, state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
@@ -196,3 +208,4 @@ for outer_train_idx, test_idx in zip(outer_train_partitions, test_partitions):
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
     i += 1
+
