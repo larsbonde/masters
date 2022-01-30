@@ -44,10 +44,9 @@ class MyLSTM(nn.Module):
     def forward(self, x):
         x, (h, c) = self.lstm(x)
         h_cat = torch.cat((h[-2, :, :], h[-1, :, :]), dim=1)
-        print(h.shape)
         out = self.linear_1(h_cat)
         out = self.batch_norm(out)
-        out = F.relu(out)
+        out = F.leaky_relu(out)
         out = self.linear_dropout(out)
         out = self.linear_2(out)
         return out

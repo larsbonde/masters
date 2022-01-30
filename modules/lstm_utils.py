@@ -242,10 +242,15 @@ def ensemble_lstm_predict(ensemble, dataset, idx, device, collate_fn=pad_collate
         for xx, y in data_loader:
             y = y.to(device)    
             if type(xx) == list:
-                xx = (x.to(device) for x in xx)
-                print(xx)
-                y_pred = torch.Tensor([model(*xx) for model in ensemble])
-                y_pred = torch.mean(torch.Tensor([torch.sigmoid(model(*xx)) for model in ensemble]))
+                # fix to generalize size
+                x_1 = xx[0].to(device)
+                x_2 = xx[1].to(device)
+                x_3 = xx[2].to(device)
+                x_4 = xx[3].to(device)    
+                y_ensemble_pred = list()
+                for i in range(len(ensemble)):
+                    y_ensemble_pred.append(ensemble[i](x_1, x_2, x_3, x_4))
+                y_pred = torch.mean(torch.Tensor(y_ensemble_pred))
             else:
                 xx = xx.to(device)
                 y_pred = torch.mean(torch.Tensor([torch.sigmoid(model(xx)) for model in ensemble]))
