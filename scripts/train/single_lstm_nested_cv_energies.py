@@ -63,15 +63,15 @@ dataset = LSTMEnergyDataset(
 )
 
 # LSTM params
-batch_size = 8
+batch_size = 32
 embedding_dim = 142
 hidden_dim = 256 #128 #32
 num_layers = 2  # from 2
 
 # general params
-epochs = 100
+epochs = 150
 learning_rate = 1e-4
-lr_decay = 0.99
+lr_decay = 0.995
 w_decay = 1e-3
 dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
