@@ -73,8 +73,8 @@ def lstm_train(
         train_loader = DataLoader(dataset=dataset, batch_sampler=train_sampler, collate_fn=collate_fn)
         valid_loader = DataLoader(dataset=dataset, batch_sampler=valid_sampler, collate_fn=collate_fn)
 
-        train_len = len(train_idx)
-        valid_len = len(valid_idx)
+        train_len = len(train_loader)
+        valid_len = len(valid_loader)
         
         train_loss = 0
         model.train()
@@ -162,8 +162,8 @@ def lstm_embedding_test_train(
         train_loader = DataLoader(dataset=dataset, batch_sampler=train_sampler, collate_fn=collate_fn)
         valid_loader = DataLoader(dataset=dataset, batch_sampler=valid_sampler, collate_fn=collate_fn)
 
-        train_len = len(train_idx)
-        valid_len = len(valid_idx)
+        train_len = len(train_loader)
+        valid_len = len(valid_loader)
         
         train_loss = 0
         model.train()
