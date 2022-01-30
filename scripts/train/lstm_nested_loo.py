@@ -186,7 +186,7 @@ for outer_train_idx, test_idx in zip(outer_train_partitions, test_partitions):
         state_ensemble.append(copy.deepcopy(net.state_dict()))
     
     ensemble_states = dict()
-    for j, net_state_dict in state_ensemble:
+    for j, net_state_dict in enumerate(state_ensemble):
         ensemble_states[j] = net_state_dict
     
     model_ensemble = [

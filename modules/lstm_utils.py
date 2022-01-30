@@ -243,6 +243,8 @@ def ensemble_lstm_predict(ensemble, dataset, idx, device, collate_fn=pad_collate
             y = y.to(device)    
             if type(xx) == list:
                 xx = (x.to(device) for x in xx)
+                print(xx)
+                y_pred = torch.Tensor([model(*xx) for model in ensemble])
                 y_pred = torch.mean(torch.Tensor([torch.sigmoid(model(*xx)) for model in ensemble]))
             else:
                 xx = xx.to(device)
