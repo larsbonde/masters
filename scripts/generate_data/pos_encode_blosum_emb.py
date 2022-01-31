@@ -48,7 +48,7 @@ dataset = LSTMDataset(
     data_dir=processed_dir / "proteinsolver_embeddings_pos", 
     annotations_path=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
 )
-new_esm_dir = processed_dir / "blosum_embedding_pos"
+new_esm_dir = processed_dir / "blosum_embeddings_pos"
 new_esm_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
 
 

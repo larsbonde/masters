@@ -74,7 +74,7 @@ epochs = 300#150
 learning_rate = 5e-5
 lr_decay = 0.995
 w_decay = 1e-3
-dropout = 0.6 test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
+dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
 # touch files to ensure output
 n_splits = len(unique_peptides)
