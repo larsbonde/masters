@@ -14,19 +14,19 @@
 #PBS -l nodes=1:ppn=4:gpus=1
 ###
 ### Required RAM in GB
-#PBS -l mem=100GB
+#PBS -l mem=50GB
 ###
 ### How long (max) will the job take, here 24 hours
-#PBS -l walltime=70:00:00
+#PBS -l walltime=500:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
-#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_lstm_esm_nested_cv.log
-#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_lstm_esm_nested_cv.log
+#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_lstm_esm_ps_nested_loo.log
+#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_lstm_esm_ps_nested_loo.log
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N lstm_esm_nested_cv
+#PBS -N lstm_nested_loo_esm_ps
 ###
 ### More qsub options can be added here
 
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/lstm_nested_cv.py -m esm
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/lstm_nested_loo.py -m esm_ps

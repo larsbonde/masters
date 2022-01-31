@@ -25,7 +25,7 @@ torch.manual_seed(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode")
-parser.add_argument("-s", "--swapped", action="store_true", default=False)
+parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
 parser.add_argument("-c", "--cluster", default="cdr3ab")
 args = parser.parse_args()
 
@@ -74,15 +74,15 @@ if args.mode == "blosum":
     hidden_dim = 128 
     num_layers = 2
 
-if args.swapped:
-    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
-
 if args.cluster == "cdr3ab":
     cluster_path = data_root / "clusterRes_cluster.tsv"
     out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
 if args.cluster == "cdr3b":
     cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
     out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
+
+if args.drop_swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -100,9 +100,9 @@ dataset = LSTMDataset(
 )
 
 # general params
-epochs = 100
-learning_rate = 1e-4
-lr_decay = 0.99
+epochs = 150
+learning_rate = 5e-5
+lr_decay = 0.995
 w_decay = 1e-3
 dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
@@ -115,7 +115,7 @@ pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
 partitions = partition_clusters(cluster_path, n_splits)
 
-if not args.swapped:
+if args.drop_swapped:
     filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
     for i in range(n_splits):
         part = [j for j in partitions[i] if j not in filtered_indices]

@@ -23,7 +23,7 @@ torch.manual_seed(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
-parser.add_argument("-s", "--swapped", action="store_true", default=False)
+parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -33,8 +33,9 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
+model_dir = data_root / "raw" / "tcrpmhc"
+cluster_path = data_root / "clusterRes_cdr3b_50_cluster.tsv"
 
-drop_swapped = True
 if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_embeddings_pos"
@@ -114,9 +115,8 @@ if args.mode == "blosum":
     hidden_dim = 128 
     num_layers = 2
 
-if args.swapped:
-    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
-    drop_swapped = False
+if args.drop_swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -130,8 +130,8 @@ unique_peptides = metadata["peptide"].unique()
 
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(
     metadata, 
-    drop_swapped=drop_swapped,
-    valid_pep="KTWGQYWQV"
+    cluster_path,
+    drop_swapped=args.drop_swapped
     )
 
 dataset = LSTMDataset(
@@ -140,9 +140,9 @@ dataset = LSTMDataset(
 )
 
 # general params
-epochs = 100
-learning_rate = 1e-4
-lr_decay = 0.99
+epochs = 150
+learning_rate = 5e-5
+lr_decay = 0.995
 w_decay = 1e-3
 dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 

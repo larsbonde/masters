@@ -23,7 +23,7 @@ torch.manual_seed(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
-parser.add_argument("-s", "--swapped", action="store_true", default=False)
+parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -33,8 +33,8 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
+cluster_path = data_root / "clusterRes_cdr3b_50_cluster.tsv"
 
-drop_swapped = True
 if args.mode == "default":
     model_dir = data_root / "raw" / "tcrpmhc"
     proc_dir = processed_dir / "proteinsolver_preprocess"
@@ -50,9 +50,8 @@ if args.mode == "rosetta":
     proc_dir = processed_dir / "proteinsolver_preprocess_rosetta_repair"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_rosetta"
 
-if args.swapped:
-    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
-    drop_swapped = False
+if args.drop_swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -73,8 +72,8 @@ dataset = ProteinDataset(
 
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(
     metadata, 
-    drop_swapped=drop_swapped,
-    valid_pep="KTWGQYWQV"
+    cluster_path, 
+    drop_swapped=args.drop_swapped
     )
 
 # GNN params
@@ -83,8 +82,8 @@ adj_input_size = 2
 hidden_size = 128
 
 # general params
-batch_size = 8
-epochs = 300
+batch_size = 16
+epochs = 200
 learning_rate = 1e-5
 lr_decay = 0.999
 w_decay = 1e-3

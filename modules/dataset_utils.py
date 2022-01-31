@@ -29,46 +29,44 @@ def filter_peptides(partition_1, partition_2, unique_peptides, filtered_peptides
     return partition_1, partition_2, unique_peptides
 
 
-def generate_loo_partitions(metadata):
+def generate_loo_partitions(metadata, drop_swapped=False):
     """
     Generates leave-one-out partitions given a df with metadata
     """
+    if drop_swapped:
+        metadata = metadata[metadata["origin"] != "swapped"]
     unique_peptides = metadata["peptide"].unique()
+    new_unique_peptides = list()
 
     metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
     loo_train_partitions = list()
     loo_test_partitions = list()
     for pep in unique_peptides:
-        test_df = metadata[metadata["peptide"] == pep]
-        test_df = test_df[test_df["origin"] != "swapped"]
-        test_unique_cdr = test_df["merged_chains"].unique()
+        if pep not in ["CLGGLLTMV", "ILKEPVHGV"]:
+            test_df = metadata[metadata["peptide"] == pep]
+            test_df = test_df[test_df["origin"] != "swapped"]
+            test_unique_cdr = test_df["merged_chains"].unique()
 
-        # get training rows and drop swapped data
-        train_df = metadata[metadata["peptide"] != pep]
-        train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
+            # get training rows and drop swapped data
+            train_df = metadata[metadata["peptide"] != pep]
+            train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
 
-        loo_train_partitions.append(list(train_df.index))
-        loo_test_partitions.append(list(test_df.index))
+            loo_train_partitions.append(list(train_df.index))
+            loo_test_partitions.append(list(test_df.index))
 
-    # hacky dataset fix
-    loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
-        loo_train_partitions, 
-        loo_test_partitions,
-        unique_peptides,
-        ["CLGGLLTMV", "ILKEPVHGV"],
-        metadata,
-    )
-    return loo_train_partitions, loo_test_partitions, unique_peptides
+            new_unique_peptides.append(pep)
+
+    return loo_train_partitions, loo_test_partitions, np.array(new_unique_peptides)
 
 
-def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=True):
+def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=False):
     """
     Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data as default.
     """
-    #if drop_swapped:    
-    #    metadata = metadata[metadata["origin"] != "swapped"]
+    if drop_swapped:
+        metadata = metadata[metadata["origin"] != "swapped"]
+
     unique_peptides = metadata["peptide"].unique()
-    #unique_peptides = np.delete(unique_peptides, np.where(unique_peptides == valid_pep))
     new_unique_peptides = list()
 
     clusters = dict()
@@ -82,8 +80,6 @@ def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=True):
                 clusters[cluster_id] = [seq_id]
             else:
                 clusters[cluster_id].append(seq_id)
-
-    metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
     
     loo_train_partitions = list()
     loo_test_partitions = list()
@@ -106,56 +102,27 @@ def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=True):
                 for cluster in clusters:
                     if i in clusters[cluster]:
                         filter_idx.extend(clusters[cluster])
-            print(len(train_df))
-            print("to remove", len(filter_idx))
             train_df = train_df.drop(index=filter_idx, errors="ignore")
-            print(len(train_df))
-            # select a % of idx from train data to use as valid
-            # drop test_unique_cdrb
-            # open cluster file
-            # find the CDR3b seqs that are in valid set
-            # find which clusters they are in
-            # extract those clustered seqs
-            # remove them from train data as normal
-
-            #valid_df = metadata[metadata["peptide"] == valid_pep]
-            #if not drop_swapped:
-            #    valid_df = valid_df[~valid_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
-            #    valid_unique_cdr = valid_df["merged_chains"].unique()
-
-            #train_df = metadata[(metadata["peptide"] != pep) & (metadata["peptide"] != valid_pep)]
-            
-            
-            #train_df = metadata[metadata["peptide"] != pep]
-            #if not drop_swapped:
-            #    train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
-            #    train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(valid_unique_cdr))]
 
             loo_train_partitions.append(list(train_df.index))
             loo_test_partitions.append(list(test_df.index))
             loo_valid_partitions.append(list(valid_df.index))
             new_unique_peptides.append(pep)
 
-    # hacky dataset fix
-    #loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
-    #    loo_train_partitions, 
-    #    loo_test_partitions,
-    #    unique_peptides,
-    #    ["CLGGLLTMV", "ILKEPVHGV"],
-    #    metadata,
-    #)
     return loo_train_partitions, loo_test_partitions, loo_valid_partitions, np.array(new_unique_peptides)
 
 
-def generate_3_loo_partitions_single_valid_peptide(metadata, drop_swapped=True, valid_pep="KTWGQYWQV"):
+def generate_3_loo_partitions_valid_peptide(metadata, drop_swapped=True, valid_pep="KTWGQYWQV"):
     """
     Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data as default.
     """
     if drop_swapped:    
         metadata = metadata[metadata["origin"] != "swapped"]
+    
     unique_peptides = metadata["peptide"].unique()
     unique_peptides = np.delete(unique_peptides, np.where(unique_peptides == valid_pep))
-    
+    new_unique_peptides = list()
+
     metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
     
     loo_train_partitions = list()
@@ -163,33 +130,25 @@ def generate_3_loo_partitions_single_valid_peptide(metadata, drop_swapped=True, 
     loo_valid_partitions = list()
 
     for pep in unique_peptides:
-        test_df = metadata[metadata["peptide"] == pep]
-        test_unique_cdr = test_df["merged_chains"].unique()
+        if pep not in ["CLGGLLTMV", "ILKEPVHGV"]:
+            test_df = metadata[metadata["peptide"] == pep]
+            test_df = test_df[test_df["origin"] != "swapped"]
+            test_unique_cdr = test_df["merged_chains"].unique()
 
-        valid_df = metadata[metadata["peptide"] == valid_pep]
-        if not drop_swapped:
+            valid_df = metadata[metadata["peptide"] == valid_pep]
             valid_df = valid_df[~valid_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
             valid_unique_cdr = valid_df["merged_chains"].unique()
 
-        train_df = metadata[(metadata["peptide"] != pep) & (metadata["peptide"] != valid_pep)]
-        if not drop_swapped:
+            train_df = metadata[(metadata["peptide"] != pep) & (metadata["peptide"] != valid_pep)]
             train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(test_unique_cdr))]
             train_df = train_df[~train_df["merged_chains"].str.contains('|'.join(valid_unique_cdr))]
 
+            loo_train_partitions.append(list(train_df.index))
+            loo_test_partitions.append(list(test_df.index))
+            loo_valid_partitions.append(list(valid_df.index))
+            new_unique_peptides.append(pep)
 
-        loo_train_partitions.append(list(train_df.index))
-        loo_test_partitions.append(list(test_df.index))
-        loo_valid_partitions.append(list(valid_df.index))
-
-    # hacky dataset fix
-    loo_train_partitions, loo_test_partitions, unique_peptides = filter_peptides(
-        loo_train_partitions, 
-        loo_test_partitions,
-        unique_peptides,
-        ["CLGGLLTMV", "ILKEPVHGV"],
-        metadata,
-    )
-    return loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides
+    return loo_train_partitions, loo_test_partitions, loo_valid_partitions, np.array(new_unique_peptides)
 
 
 def partition_clusters(cluster_path, n_split=5):

@@ -63,13 +63,13 @@ dataset = LSTMEnergyDataset(
 )
 
 # LSTM params
-batch_size = 32
+batch_size = 64
 embedding_dim = 142
 hidden_dim = 256 #128 #32
 num_layers = 2  # from 2
 
 # general params
-epochs = 150#150
+epochs = 300#150
 learning_rate = 5e-5
 lr_decay = 0.995
 w_decay = 1e-3

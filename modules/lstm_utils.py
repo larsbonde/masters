@@ -250,7 +250,7 @@ def ensemble_lstm_predict(ensemble, dataset, idx, device, collate_fn=pad_collate
                 y_ensemble_pred = list()
                 for i in range(len(ensemble)):
                     y_ensemble_pred.append(ensemble[i](x_1, x_2, x_3, x_4))
-                y_pred = torch.mean(torch.Tensor(y_ensemble_pred))
+                y_pred = torch.mean(torch.sigmoid(torch.Tensor(y_ensemble_pred)))
             else:
                 xx = xx.to(device)
                 y_pred = torch.mean(torch.Tensor([torch.sigmoid(model(xx)) for model in ensemble]))

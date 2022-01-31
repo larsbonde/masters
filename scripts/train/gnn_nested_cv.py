@@ -24,7 +24,7 @@ torch.manual_seed(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
-parser.add_argument("-s", "--swapped", action="store_true", default=False)
+parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
 parser.add_argument("-c", "--cluster", default="cdr3ab")
 args = parser.parse_args()
 
@@ -36,13 +36,10 @@ metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 
-
 if args.mode == "default":
     model_dir = data_root / "raw" / "tcrpmhc"
     proc_dir = processed_dir / "proteinsolver_preprocess"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_80_cv"
-if args.swapped:
-    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
 
 if args.cluster == "cdr3ab":
     cluster_path = data_root / "clusterRes_cluster.tsv"
@@ -50,6 +47,9 @@ if args.cluster == "cdr3ab":
 if args.cluster == "cdr3b":
     cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
     out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
+
+if args.drop_swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -75,7 +75,7 @@ hidden_size = 128
 
 # general params
 batch_size = 8
-epochs = 300
+epochs = 200
 learning_rate = 1e-5
 lr_decay = 0.999
 w_decay = 1e-3
@@ -89,7 +89,7 @@ pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
 partitions = partition_clusters(cluster_path, n_splits)
 
-if not args.swapped:
+if args.drop_swapped:
     filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
     for i in range(n_splits):
         part = [j for j in partitions[i] if j not in filtered_indices]

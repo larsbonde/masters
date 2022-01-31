@@ -23,7 +23,7 @@ torch.manual_seed(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
-parser.add_argument("-s", "--swapped", action="store_true", default=False)
+parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -34,13 +34,12 @@ metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 
-drop_swapped = True
 if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_nested_loo"
-    batch_size = 16
+    batch_size = 32
     embedding_dim = 128
     hidden_dim = 128
     num_layers = 2 
@@ -50,7 +49,7 @@ if args.mode == "esm":
     data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_nested_loo"
-    batch_size = 16
+    batch_size = 32
     embedding_dim = 1280
     hidden_dim = 128 
     num_layers = 2
@@ -60,7 +59,7 @@ if args.mode == "esm_ps":
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_nested_loo"
-    batch_size = 16
+    batch_size = 32
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
@@ -70,7 +69,7 @@ if args.mode == "ps_foldx":
     data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
     targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_foldx_nested_loo"
-    batch_size = 16
+    batch_size = 32
     embedding_dim = 128
     hidden_dim = 128
     num_layers = 2 
@@ -80,7 +79,7 @@ if args.mode == "esm_ps_foldx":
     data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_foldx_nested_loo"
-    batch_size = 16
+    batch_size = 32
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
@@ -90,7 +89,7 @@ if args.mode == "ps_rosetta":
     data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_rosetta_nested_loo"
-    batch_size = 16
+    batch_size = 32
     embedding_dim = 128
     hidden_dim = 128 
     num_layers = 2
@@ -100,14 +99,13 @@ if args.mode == "esm_ps_rosetta":
     data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_rosetta_nested_loo"
-    batch_size = 16
+    batch_size = 32
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
 
-if args.swapped:
-    out_dir = out_dir.parent / str(out_dir.name + "_swapped")
-    drop_swapped = False
+if args.drop_swapped:
+    out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
@@ -125,13 +123,13 @@ dataset = LSTMDataset(
 )
 
 # general params
-epochs = 2
+epochs = 50
 learning_rate = 1e-4
 lr_decay = 0.99
 w_decay = 1e-3
 dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
-outer_train_partitions, test_partitions, unique_peptides = generate_loo_partitions(metadata)
+outer_train_partitions, test_partitions, unique_peptides = generate_loo_partitions(metadata, drop_swapped=args.drop_swapped)
 
 # touch files to ensure output
 n_splits = len(unique_peptides)
