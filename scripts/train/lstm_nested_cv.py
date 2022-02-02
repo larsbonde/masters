@@ -64,7 +64,47 @@ if args.mode == "esm_ps":
     embedding_dim = 1280 + 128
     hidden_dim = 128 
     num_layers = 2
-    
+
+if args.mode == "ps_foldx":
+    model_dir = data_root / "raw" / "foldx_repair"
+    data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
+    targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_foldx_80_cv"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
+if args.mode == "esm_ps_foldx":
+    model_dir = data_root / "raw" / "foldx_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_foldx_80_cv"
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "ps_rosetta":
+    model_dir = data_root / "raw" / "rosetta_repair"
+    data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_rosetta_80_cv"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "esm_ps_rosetta":
+    model_dir = data_root / "raw" / "rosetta_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_rosetta_80_cv"
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
 if args.mode == "blosum":
     data = processed_dir / "blosum_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
