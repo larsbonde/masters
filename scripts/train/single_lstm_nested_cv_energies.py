@@ -26,6 +26,7 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
 parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
+parser.add_argument("-c", "--cluster", default="cdr3ab")
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -39,8 +40,8 @@ out_dir = root / "state_files" / "tcr_binding" / "lstm_single_energy_80_cv"
 cluster_path = data_root / "clusterRes_cluster.tsv"
 
 n_splits = 5
-partitions = [list() for _ in range(n_splits)]
 targets = list()
+available_indices = list()
 
 model_energies_dir = Path("/home/projects/ht3_aim/people/idamei/data/train_data")
 
@@ -54,13 +55,22 @@ for i, path in enumerate(paths):
     else:
         bind = 0
     targets.append(bind)
-    part = int(split[-3][0]) - 1
-    partitions[part].append(i)
+    available_indices.append(split[0])
 
 dataset = LSTMEnergyDataset(
     paths=paths,
     targets=targets
 )
+
+if args.cluster == "cdr3ab":
+    cluster_path = data_root / "clusterRes_cluster.tsv"
+    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
+if args.cluster == "cdr3b":
+    cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
+    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
+if args.cluster == "cdr3b_low_cov":
+    cluster_path = data_root / "clusterRes_cdr3b_test_cov_25_cluster.tsv"
+    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b_low_cov")
 
 # LSTM params
 batch_size = 64
@@ -69,11 +79,18 @@ hidden_dim = 256 #128 #32
 num_layers = 2  # from 2
 
 # general params
-epochs = 300#150
-learning_rate = 5e-5
+epochs = 200#150
+learning_rate = 1e-4
 lr_decay = 0.995
 w_decay = 1e-3
 dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
+
+partitions = partition_clusters(cluster_path, n_splits)
+
+available_indices = list(metadata.index)
+for i in range(n_splits):
+    part = [j for j in partitions[i] if j in available_indices]
+    partitions[i] = part
 
 # touch files to ensure output
 save_dir = get_non_dupe_dir(out_dir)

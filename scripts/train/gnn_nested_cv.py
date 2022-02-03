@@ -43,10 +43,10 @@ if args.mode == "default":
 
 if args.cluster == "cdr3ab":
     cluster_path = data_root / "clusterRes_cluster.tsv"
-    out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
+    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
 if args.cluster == "cdr3b":
     cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
-    out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
+    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
 
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
