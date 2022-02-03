@@ -115,6 +115,16 @@ if args.mode == "blosum":
     hidden_dim = 128 
     num_layers = 2
 
+if args.mode == "ps_data_subset":
+    model_dir = data_root / "raw" / "foldx_repair"
+    data=processed_dir / "proteinsolver_embeddings_pos"
+    targets=processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_repaired_model_subset"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
