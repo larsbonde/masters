@@ -161,6 +161,11 @@ if args.drop_swapped:
         part = [j for j in partitions[i] if j not in filtered_indices]
         partitions[i] = part
 
+available_indices = list(metadata.index)
+for i in range(n_splits):
+    part = [j for j in partitions[i] if j in available_indices]
+    partitions[i] = part
+
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 
 for i in range(n_splits):
