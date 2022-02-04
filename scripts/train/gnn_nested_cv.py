@@ -40,6 +40,15 @@ if args.mode == "default":
     model_dir = data_root / "raw" / "tcrpmhc"
     proc_dir = processed_dir / "proteinsolver_preprocess"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_80_cv"
+if args.mode == "foldx":
+    model_dir = data_root / "raw" / "foldx_repair"
+    proc_dir = processed_dir / "proteinsolver_preprocess_foldx_repair"
+    out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_80_cv_foldx"
+if args.mode == "rosetta":
+    model_dir = data_root / "raw" / "rosetta_repair"
+    proc_dir = processed_dir / "proteinsolver_preprocess_rosetta_repair"
+    out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_80_cv_rosetta"
+
 
 if args.cluster == "cdr3ab":
     cluster_path = data_root / "clusterRes_cluster.tsv"

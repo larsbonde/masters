@@ -57,6 +57,13 @@ for i, path in enumerate(paths):
     targets.append(bind)
     available_indices.append(split[0])
 
+# get list of npy idx
+
+# get models of raw tcrpmhc
+# make normal metadata frame
+# merge list of npy idx to dataframe
+
+
 dataset = LSTMEnergyDataset(
     paths=paths,
     targets=targets

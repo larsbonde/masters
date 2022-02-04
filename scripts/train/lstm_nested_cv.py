@@ -42,6 +42,7 @@ if args.mode == "ps":
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 128
     hidden_dim = 128
@@ -51,6 +52,7 @@ if args.mode == "esm":
     data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 1280
     hidden_dim = 128 
@@ -60,6 +62,7 @@ if args.mode == "esm_ps":
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128
     hidden_dim = 128 
@@ -70,6 +73,7 @@ if args.mode == "ps_foldx":
     data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
     targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_foldx_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 128
     hidden_dim = 128
@@ -80,6 +84,7 @@ if args.mode == "esm_ps_foldx":
     data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_foldx_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128
     hidden_dim = 128 
@@ -90,6 +95,7 @@ if args.mode == "ps_rosetta":
     data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_rosetta_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 128
     hidden_dim = 128 
@@ -100,6 +106,7 @@ if args.mode == "esm_ps_rosetta":
     data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_rosetta_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128
     hidden_dim = 128 
@@ -109,6 +116,7 @@ if args.mode == "blosum":
     data = processed_dir / "blosum_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_blosum_80_cv"
+    epochs = 250
     batch_size = 8
     embedding_dim = 21
     hidden_dim = 128 
@@ -143,7 +151,6 @@ dataset = LSTMDataset(
 )
 
 # general params
-epochs = 150
 learning_rate = 5e-5
 lr_decay = 0.995
 w_decay = 1e-3
@@ -163,11 +170,6 @@ if args.drop_swapped:
     for i in range(n_splits):
         part = [j for j in partitions[i] if j not in filtered_indices]
         partitions[i] = part
-
-available_indices = list(metadata.index)
-for i in range(n_splits):
-    part = [j for j in partitions[i] if j in available_indices]
-    partitions[i] = part
 
 extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 

@@ -59,16 +59,7 @@ def generate_loo_partitions(metadata, drop_swapped=False):
     return loo_train_partitions, loo_test_partitions, np.array(new_unique_peptides)
 
 
-def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=False):
-    """
-    Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data as default.
-    """
-    if drop_swapped:
-        metadata = metadata[metadata["origin"] != "swapped"]
-
-    unique_peptides = metadata["peptide"].unique()
-    new_unique_peptides = list()
-
+def load_cluster_file(cluster_path):
     clusters = dict()
     with open(cluster_path) as file:
         for line in file:
@@ -80,7 +71,21 @@ def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=False):
                 clusters[cluster_id] = [seq_id]
             else:
                 clusters[cluster_id].append(seq_id)
-    
+    return clusters
+
+
+def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=False):
+    """
+    Generates leave-one-out partitions given a df with metadata. NOTE: Drops swapped data as default.
+    """
+    if drop_swapped:
+        metadata = metadata[metadata["origin"] != "swapped"]
+
+    unique_peptides = metadata["peptide"].unique()
+    new_unique_peptides = list()
+
+    clusters = load_cluster_file(cluster_path)
+
     loo_train_partitions = list()
     loo_test_partitions = list()
     loo_valid_partitions = list()
@@ -98,11 +103,17 @@ def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=False):
             valid_df = valid_df[~valid_df["CDR3b"].str.contains('|'.join(test_unique_cdr))]
 
             filter_idx = list()
-            for i in valid_df.index:
+            for idx in valid_df["#ID"]:
                 for cluster in clusters:
-                    if i in clusters[cluster]:
-                        filter_idx.extend(clusters[cluster])
-            train_df = train_df.drop(index=filter_idx, errors="ignore")
+                    if idx in clusters[cluster]:
+                        filter_idx.extend(clusters[cluster])  # extend list of #ID
+            train_df = train_df[~train_df["#ID"].isin(filter_idx)]  # drop those #IDs
+            # TODO fix
+            #for id in valid_df["#ID"]:  # for #ID in valid[#ID]  (#ID is raw file idx)
+            #    for cluster in clusters:
+            #        if id in clusters[cluster]:
+            #            filter_idx.extend(clusters[cluster])  # extend list of #ID
+            #train_df = train_df.drop(index=filter_idx, errors="ignore")  # drop those #IDs
 
             loo_train_partitions.append(list(train_df.index))
             loo_test_partitions.append(list(test_df.index))
@@ -151,19 +162,13 @@ def generate_3_loo_partitions_valid_peptide(metadata, drop_swapped=True, valid_p
     return loo_train_partitions, loo_test_partitions, loo_valid_partitions, np.array(new_unique_peptides)
 
 
-def partition_clusters(cluster_path, n_split=5):
+def partition_clusters(metadata, cluster_path, n_split=5):  # add metadata to args
     """loads clusters from mmseqs2 clustering tsv formatted results"""
-    clusters = dict()
-    with open(cluster_path) as file:
-        for line in file:
-            line = line.strip()
-            line = line.split("\t")
-            cluster_id = int(line[0])
-            seq_id = int(line[1])
-            if cluster_id not in clusters:
-                clusters[cluster_id] = [seq_id]
-            else:
-                clusters[cluster_id].append(seq_id)
+    clusters = load_cluster_file(cluster_path)
+
+    cluster_idx_map = dict()
+    for id_idx, idx in zip(metadata["#ID"], list(metadata.index)):
+        cluster_idx_map[id_idx] = idx
 
     clusters_list = list(clusters.values())
     clusters_list.sort(key=len)
@@ -176,7 +181,18 @@ def partition_clusters(cluster_path, n_split=5):
         partitions[i].extend(seq_idx)
         i += 1
         if i >= n_split:
-            i = 0        
+            i = 0
+
+    # fix my stupid file indexing method
+    for i in range(len(partitions)):
+        part = partitions[i]
+        new_part = list()
+        for idx in part:
+            try:
+                new_part.append(cluster_idx_map[idx])
+            except KeyError:
+                pass
+        partitions[i] = new_part    
 
     return partitions
 

@@ -83,9 +83,9 @@ hidden_size = 128
 
 # general params
 batch_size = 16
-epochs = 200
+epochs = 400
 learning_rate = 1e-5
-lr_decay = 0.999
+lr_decay = 0.9999
 w_decay = 1e-3
 
 # touch files to ensure output
