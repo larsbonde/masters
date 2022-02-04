@@ -131,7 +131,7 @@ if args.mode == "energy":
     targets = processed_dir / "energy_terms_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_energy"
     batch_size = 8
-    embedding_dim = 128
+    embedding_dim = 135
     hidden_dim = 128
     num_layers = 2 
 

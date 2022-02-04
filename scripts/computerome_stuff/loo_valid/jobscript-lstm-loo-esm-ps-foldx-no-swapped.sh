@@ -17,16 +17,16 @@
 #PBS -l mem=50GB
 ###
 ### How long (max) will the job take, here 24 hours
-#PBS -l walltime=350:00:00
+#PBS -l walltime=70:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
-#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_gnn.log
-#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_gnn.log
+#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_lstm_esm_ps_foldx.log
+#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_lstm_esm_ps_foldx.log
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N ps_finetune
+#PBS -N lstm_esm_ps_foldx
 ###
 ### More qsub options can be added here
 
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/gnn_loo.py -m default
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/lstm_loo.py -m esm_ps_foldx -s
