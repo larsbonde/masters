@@ -125,6 +125,16 @@ if args.mode == "ps_data_subset":
     hidden_dim = 128
     num_layers = 2 
 
+if args.mode == "energy":
+    model_dir = data_root / "raw" / "energy_terms_mock"
+    data = processed_dir / "energy_terms_pos"
+    targets = processed_dir / "energy_terms_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_energy"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 

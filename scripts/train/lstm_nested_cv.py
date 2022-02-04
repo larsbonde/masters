@@ -122,6 +122,16 @@ if args.mode == "blosum":
     hidden_dim = 128 
     num_layers = 2
 
+if args.mode == "energy":
+    model_dir = data_root / "raw" / "energy_terms_mock"
+    data = processed_dir / "energy_terms_pos"
+    targets = processed_dir / "energy_terms_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "lstm_energy_80_cv"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
 if args.cluster == "cdr3ab":
     cluster_path = data_root / "clusterRes_cluster.tsv"
     out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
