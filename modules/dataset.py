@@ -14,7 +14,8 @@ class LSTMDataset(torch.utils.data.Dataset):
     def __init__(
         self, 
         data_dir, 
-        annotations_path, 
+        annotations_path,
+        device,
         transform=None, 
         target_transform=None
     ):
@@ -27,7 +28,7 @@ class LSTMDataset(torch.utils.data.Dataset):
         return len(self.annotations)
 
     def __getitem__(self, idx):
-        x = torch.load(f"{self.data_dir}/data_{idx}.pt")
+        x = torch.load(f"{self.data_dir}/data_{idx}.pt", map_location=self.device)
         y = self.annotations[idx]
         return x, y
 

@@ -67,7 +67,8 @@ loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides
 
 dataset = LSTMDataset(
     data_dir=data, 
-    annotations_path=targets
+    annotations_path=targets,
+    device=device
 )
 
 # general params
