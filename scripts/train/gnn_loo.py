@@ -33,7 +33,7 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-cluster_path = data_root / "clusterRes_cdr3b_50_cluster.tsv"
+cluster_path = data_root / "clusterRes_cdr3b_50_raw_idx_cluster.tsv"
 
 if args.mode == "default":
     model_dir = data_root / "raw" / "tcrpmhc"
