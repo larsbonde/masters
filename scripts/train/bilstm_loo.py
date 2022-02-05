@@ -34,26 +34,106 @@ metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 model_dir = data_root / "raw" / "tcrpmhc"
-cluster_path = data_root / "clusterRes_cdr3b_50_cluster.tsv"
+cluster_path = data_root / "clusterRes_cdr3b_50_raw_idx_cluster.tsv"
 
 if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_single"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_ps"
     batch_size = 8
-    embedding_dim = 128 + 4
-    hidden_dim = 256
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
+if args.mode == "esm":
+    model_dir = data_root / "raw" / "tcrpmhc"
+    data = processed_dir / "esm_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_esm"
+    batch_size = 8
+    embedding_dim = 1280
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "esm_ps":
+    model_dir = data_root / "raw" / "tcrpmhc"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_esm_ps"
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
     num_layers = 2
 
 if args.mode == "ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
     targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_single_foldx"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_ps_foldx"
     batch_size = 8
-    embedding_dim = 128 + 4
-    hidden_dim = 256
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
+if args.mode == "esm_ps_foldx":
+    model_dir = data_root / "raw" / "foldx_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_esm_ps_foldx"
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "ps_rosetta":
+    model_dir = data_root / "raw" / "rosetta_repair"
+    data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_ps_rosetta"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "esm_ps_rosetta":
+    model_dir = data_root / "raw" / "rosetta_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_esm_ps_rosetta"
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "blosum":
+    data = processed_dir / "blosum_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_blosum"
+    batch_size = 8
+    embedding_dim = 21
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "ps_data_subset":
+    model_subset_dir = data_root / "raw" / "foldx_repair"
+    model_dir = data_root / "raw" / "tcrpmhc"
+    data = processed_dir / "proteinsolver_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_ps_repaired_model_subset"
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
+if args.mode == "energy":
+    model_dir = data_root / "raw" / "energy_terms_mock"
+    data = processed_dir / "energy_terms_pos"
+    targets = processed_dir / "energy_terms_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "bilstm_energy"
+    batch_size = 8
+    embedding_dim = 135
+    hidden_dim = 128
     num_layers = 2 
 
 if args.drop_swapped:
@@ -67,12 +147,18 @@ metadata = pd.read_csv(metadata_path)
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
 metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
+
+if args.mode == "ps_data_subset":
+    paths_subset = list(model_subset_dir.glob("*"))
+    path_df_subset = pd.DataFrame({'#ID': [int(x.name.split("_")[0]) for x in paths_subset]})
+    metadata = metadata.join(path_df_subset.set_index("#ID"), on="#ID", how="inner")
+
 unique_peptides = metadata["peptide"].unique()
 
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(
-    metadata,
+    metadata, 
     cluster_path,
-    drop_swapped=args.drop_swapped,
+    drop_swapped=args.drop_swapped
     )
 
 dataset = LSTMDataset(
@@ -100,7 +186,7 @@ extra_print_str = "\nSaving to {}\nFold: {}\nPeptide: {}"
 i = 0
 for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partitions, loo_valid_partitions):
     
-    net = MyLSTM(
+    net = QuadBiLSTM(
         embedding_dim=embedding_dim, 
         hidden_dim=hidden_dim, 
         num_layers=num_layers, 
@@ -130,14 +216,13 @@ for train_idx, test_idx, valid_idx in zip(loo_train_partitions, loo_test_partiti
         valid_idx,
         batch_size,
         device,
-        collate_fn=pad_collate,
         extra_print=extra_print_str.format(save_dir, i, unique_peptides[i]),
         early_stopping=True,
     )
     torch.save(net.state_dict(), state_paths[i])
     torch.save({"train": train_losses, "valid": valid_losses}, loss_paths[i])
     
-    pred, true = lstm_predict(net, dataset, test_idx, device, collate_fn=pad_collate)     
+    pred, true = lstm_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
     
     i += 1

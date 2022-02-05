@@ -91,7 +91,7 @@ class QuadLSTM(nn.Module):
         
         self.linear_dropout = nn.Dropout(p=dropout)
         self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
-        self.linear_1 = nn.Linear(hidden_dim * 4, hidden_dim)
+        self.linear_1 = nn.Linear(hidden_dim * 8, hidden_dim)
         self.linear_2 = nn.Linear(hidden_dim, 1)
         
         torch.nn.init.xavier_uniform_(self.linear_1.weight)
@@ -103,6 +103,76 @@ class QuadLSTM(nn.Module):
         _, (h_3, _) = self.lstm_3(x_3)
         _, (h_4, _) = self.lstm_4(x_4)
         h_cat = torch.cat((h_1[-1], h_2[-1], h_3[-1], h_4[-1]), dim=1)
+        out = self.linear_1(h_cat)
+        out = self.batch_norm(out)
+        out = F.relu(out)
+        out = self.linear_dropout(out)
+        out = self.linear_2(out)
+        return out
+
+
+class QuadBiLSTM(nn.Module):
+    def __init__(self, embedding_dim, hidden_dim, num_layers, dropout=0.0):
+        super(QuadLSTM, self).__init__()
+        
+        self.num_layers = num_layers
+        self.hidden_dim = hidden_dim
+        self.dropout = dropout
+        
+        self.lstm_1 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+            bidirectional=True
+        )       
+        self.lstm_2 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout,
+            batch_first=True,
+            bidirectional=True
+        )        
+        self.lstm_3 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout, 
+            batch_first=True,
+            bidirectional=True
+        )     
+        self.lstm_4 = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=hidden_dim,
+            num_layers=num_layers,
+            dropout=dropout, 
+            batch_first=True,
+            bidirectional=True
+        )
+        
+        self.linear_dropout = nn.Dropout(p=dropout)
+        self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
+        self.linear_1 = nn.Linear(hidden_dim * 4, hidden_dim)
+        self.linear_2 = nn.Linear(hidden_dim, 1)
+        
+        torch.nn.init.xavier_uniform_(self.linear_1.weight)
+        torch.nn.init.xavier_uniform_(self.linear_2.weight)
+    
+    def forward(self, x_1, x_2, x_3, x_4):
+        _, (h_1, _) = self.lstm_1(x_1)
+        _, (h_2, _) = self.lstm_2(x_2)
+        _, (h_3, _) = self.lstm_3(x_3)
+        _, (h_4, _) = self.lstm_4(x_4)
+        
+        h_cat = torch.cat((
+            torch.cat((h_1[-2, :, :], h_1[-1, :, :]), dim=1), 
+            torch.cat((h_2[-2, :, :], h_2[-1, :, :]), dim=1), 
+            torch.cat((h_3[-2, :, :], h_3[-1, :, :]), dim=1), 
+            torch.cat((h_4[-2, :, :], h_4[-1, :, :]), dim=1)
+            ), 
+            dim=1)
         out = self.linear_1(h_cat)
         out = self.batch_norm(out)
         out = F.relu(out)
