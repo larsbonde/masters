@@ -60,9 +60,9 @@ for i, path, target in zip(list(metadata.index), metadata["path"], metadata["bin
     new_pos = torch.from_numpy(new_pos)
     
     new_x = np.delete(x, [mhc_idx, pep_idx, tcra_idx, tcrb_idx] + time_idx, axis=1)
-    new_x = torch.from_numpy(new_x).float()
+    new_x = torch.from_numpy(new_x)
     new_x = torch.hstack((new_x, new_pos))
-    torch.save(new_x, new_dir / f"data_{i}.pt")
+    torch.save(new_x.float(), new_dir / f"data_{i}.pt")
     
     targets.append([target])
 

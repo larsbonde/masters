@@ -23,6 +23,7 @@ class LSTMDataset(torch.utils.data.Dataset):
         self.transform = transform
         self.target_transform = target_transform
         self.annotations = torch.Tensor(torch.load(annotations_path))
+        self.device = device
 
     def __len__(self):
         return len(self.annotations)
