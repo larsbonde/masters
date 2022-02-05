@@ -116,7 +116,8 @@ if args.mode == "blosum":
     num_layers = 2
 
 if args.mode == "ps_data_subset":
-    model_dir = data_root / "raw" / "foldx_repair"
+    model_subset_dir = data_root / "raw" / "foldx_repair"
+    model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_repaired_model_subset"
@@ -146,6 +147,12 @@ metadata = pd.read_csv(metadata_path)
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
 metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
+
+if args.mode == "ps_data_subset":
+    paths_subset = list(model_subset_dir.glob("*"))
+    path_df_subset = pd.DataFrame({'#ID': [int(x.name.split("_")[0]) for x in paths_subset]})
+    metadata = metadata.join(path_df_subset.set_index("#ID"), on="#ID", how="inner")
+
 unique_peptides = metadata["peptide"].unique()
 
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(
