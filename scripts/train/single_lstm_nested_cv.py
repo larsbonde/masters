@@ -132,14 +132,11 @@ if args.mode == "energy":
     hidden_dim = 256
     num_layers = 2 
 
-if args.cluster == "cdr3ab":
-    cluster_path = data_root / "clusterRes_cluster.tsv"
-    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
 if args.cluster == "cdr3b":
-    cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
+    cluster_path = data_root / "clusterRes_cdr3b_80_raw_idx_cluster.tsv"
     out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
 if args.cluster == "cdr3b_low_cov":
-    cluster_path = data_root / "clusterRes_cdr3b_test_cov_25_cluster.tsv"
+    cluster_path = data_root / "clusterRes_cdr3b_80_raw_idx_cluster_low_cov.tsv"
     out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b_low_cov")
 
 if args.drop_swapped:

@@ -50,12 +50,12 @@ if args.mode == "rosetta":
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_80_cv_rosetta"
 
 
-if args.cluster == "cdr3ab":
-    cluster_path = data_root / "clusterRes_cluster.tsv"
-    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
 if args.cluster == "cdr3b":
-    cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
+    cluster_path = data_root / "clusterRes_cdr3b_80_raw_idx_cluster.tsv"
     out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
+if args.cluster == "cdr3b_low_cov":
+    cluster_path = data_root / "clusterRes_cdr3b_80_raw_idx_cluster_low_cov.tsv"
+    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b_low_cov")
 
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
