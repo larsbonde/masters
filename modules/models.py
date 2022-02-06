@@ -91,7 +91,7 @@ class QuadLSTM(nn.Module):
         
         self.linear_dropout = nn.Dropout(p=dropout)
         self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
-        self.linear_1 = nn.Linear(hidden_dim * 8, hidden_dim)
+        self.linear_1 = nn.Linear(hidden_dim * 4, hidden_dim)
         self.linear_2 = nn.Linear(hidden_dim, 1)
         
         torch.nn.init.xavier_uniform_(self.linear_1.weight)
@@ -113,7 +113,7 @@ class QuadLSTM(nn.Module):
 
 class QuadBiLSTM(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, num_layers, dropout=0.0):
-        super(QuadLSTM, self).__init__()
+        super(QuadBiLSTM, self).__init__()
         
         self.num_layers = num_layers
         self.hidden_dim = hidden_dim
@@ -154,7 +154,7 @@ class QuadBiLSTM(nn.Module):
         
         self.linear_dropout = nn.Dropout(p=dropout)
         self.batch_norm = nn.BatchNorm1d(num_features=hidden_dim)
-        self.linear_1 = nn.Linear(hidden_dim * 4, hidden_dim)
+        self.linear_1 = nn.Linear(hidden_dim * 8, hidden_dim)
         self.linear_2 = nn.Linear(hidden_dim, 1)
         
         torch.nn.init.xavier_uniform_(self.linear_1.weight)
