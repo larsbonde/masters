@@ -26,7 +26,7 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode")
 parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
-parser.add_argument("-c", "--cluster", default="cdr3ab")
+parser.add_argument("-c", "--cluster", default="cdr3b")
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -70,8 +70,8 @@ if args.mode == "esm_ps":
 
 if args.mode == "ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
-    data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
-    targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
+    data = processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_single_ps_foldx_80_cv"
     epochs = 150
     batch_size = 8
@@ -136,7 +136,7 @@ if args.cluster == "cdr3b":
     cluster_path = data_root / "clusterRes_cdr3b_80_raw_idx_cluster.tsv"
     out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
 if args.cluster == "cdr3b_low_cov":
-    cluster_path = data_root / "clusterRes_cdr3b_80_raw_idx_cluster_low_cov.tsv"
+    cluster_path = data_root / "clusterRes_cdr3b_80_raw_idx_low_cov_cluster.tsv"
     out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b_low_cov")
 
 if args.drop_swapped:

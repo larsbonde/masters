@@ -26,7 +26,7 @@
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N single_lstm_esm_ps_datasubset_no_swapped
+#PBS -N single_lstm_ps_datasubset_no_swapped
 ###
 ### More qsub options can be added here
 
