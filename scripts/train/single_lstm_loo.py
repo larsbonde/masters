@@ -24,6 +24,7 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
 parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
+parser.add_argument("-r", "--data_subset", action="store_true", default=False)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -56,6 +57,10 @@ if args.mode == "ps_foldx":
     hidden_dim = 256
     num_layers = 2 
 
+if args.data_subset:
+    model_subset_dir = data_root / "raw" / "foldx_repair"
+    out_dir = out_dir.parent / str(out_dir.name +  "lstm_ps_repaired_model_subset")
+
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
@@ -67,6 +72,12 @@ metadata = pd.read_csv(metadata_path)
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
 metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
+
+if args.data_subset:
+    paths_subset = list(model_subset_dir.glob("*"))
+    path_df_subset = pd.DataFrame({'#ID': [int(x.name.split("_")[0]) for x in paths_subset]})
+    metadata = metadata.join(path_df_subset.set_index("#ID"), on="#ID", how="inner")
+
 unique_peptides = metadata["peptide"].unique()
 
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(

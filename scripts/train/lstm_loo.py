@@ -24,6 +24,7 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
 parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
+parser.add_argument("-r", "--data_subset", action="store_true", default=False)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -115,17 +116,6 @@ if args.mode == "blosum":
     hidden_dim = 128 
     num_layers = 2
 
-if args.mode == "ps_data_subset":
-    model_subset_dir = data_root / "raw" / "foldx_repair"
-    model_dir = data_root / "raw" / "tcrpmhc"
-    data = processed_dir / "proteinsolver_embeddings_pos"
-    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_repaired_model_subset"
-    batch_size = 8
-    embedding_dim = 128
-    hidden_dim = 128
-    num_layers = 2 
-
 if args.mode == "energy":
     model_dir = data_root / "raw" / "energy_terms_mock"
     data = processed_dir / "energy_terms_pos"
@@ -135,6 +125,10 @@ if args.mode == "energy":
     embedding_dim = 135
     hidden_dim = 128
     num_layers = 2 
+
+if args.data_subset:
+    model_subset_dir = data_root / "raw" / "foldx_repair"
+    out_dir = out_dir.parent / str(out_dir.name +  "lstm_ps_repaired_model_subset")
 
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
@@ -148,7 +142,7 @@ metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # fil
 metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 
-if args.mode == "ps_data_subset":
+if args.data_subset:
     paths_subset = list(model_subset_dir.glob("*"))
     path_df_subset = pd.DataFrame({'#ID': [int(x.name.split("_")[0]) for x in paths_subset]})
     metadata = metadata.join(path_df_subset.set_index("#ID"), on="#ID", how="inner")

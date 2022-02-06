@@ -26,7 +26,7 @@
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N single_lstm_esm_ps_datasubset_no_swapped
+#PBS -N lstm_esm_ps_datasubset_no_swapped
 ###
 ### More qsub options can be added here
 
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/single_lstm_loo.py -m ps -r -s
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/lstm_loo.py -m esm_ps -r -s
