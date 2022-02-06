@@ -100,7 +100,7 @@ def generate_3_loo_partitions(metadata, cluster_path, drop_swapped=False):
             train_df = train_df[~train_df["CDR3b"].str.contains('|'.join(test_unique_cdr))]
 
             valid_df = train_df.sample(frac=0.2)
-            valid_df = valid_df[~valid_df["CDR3b"].str.contains('|'.join(test_unique_cdr))]
+            valid_df = valid_df[~valid_df["CDR3b"].str.contains('|'.join(test_unique_cdr))]  # redundant
 
             filter_idx = list()
             for idx in valid_df["#ID"]:
