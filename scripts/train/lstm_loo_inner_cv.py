@@ -107,16 +107,6 @@ if args.mode == "esm_ps_rosetta":
     hidden_dim = 128 
     num_layers = 2
 
-if args.cluster == "cdr3ab":
-    cluster_path = data_root / "clusterRes_cluster.tsv"
-    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3ab")
-if args.cluster == "cdr3b":
-    cluster_path = data_root / "clusterRes_cdr3b_cluster.tsv"
-    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b")
-if args.cluster == "cdr3b_low_cov":
-    cluster_path = data_root / "clusterRes_cdr3b_test_cov_25_cluster.tsv"
-    out_dir = out_dir.parent / str(out_dir.name + "_cluster_cdr3b_low_cov")
-
 if args.cluster == "medium":
     cluster_path = data_root / "clusterRes_cdr3b_50_raw_idx_cluster.tsv"
 if args.cluster == "low":
@@ -169,7 +159,7 @@ for outer_train_idx, test_idx in zip(outer_train_partitions, test_partitions):
 
     inner_metadata = metadata.iloc[outer_train_idx].copy(deep=True)
     inner_metadata = inner_metadata.sample(frac=1)  # shuffle rows to get even partitions
-    inner_partitions = partition_clusters(inner_metadata, cluster_file)
+    inner_partitions = partition_clusters(inner_metadata, cluster_path)
     inner_train_partitions, inner_valid_partitions = join_partitions(inner_partitions)
 
     for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):

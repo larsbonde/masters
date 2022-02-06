@@ -70,8 +70,8 @@ def lstm_train(
         train_sampler = BatchSampler(SubsetRandomSampler(train_idx), batch_size=batch_size, drop_last=True)
         valid_sampler = BatchSampler(SubsetRandomSampler(valid_idx), batch_size=1, drop_last=False)
         
-        train_loader = DataLoader(dataset=dataset, batch_sampler=train_sampler, collate_fn=collate_fn, num_workers=4, pin_memory=True)
-        valid_loader = DataLoader(dataset=dataset, batch_sampler=valid_sampler, collate_fn=collate_fn, num_workers=4, pin_memory=True)
+        train_loader = DataLoader(dataset=dataset, batch_sampler=train_sampler, collate_fn=collate_fn, pin_memory=True)
+        valid_loader = DataLoader(dataset=dataset, batch_sampler=valid_sampler, collate_fn=collate_fn, pin_memory=True)
 
         train_len = len(train_loader)
         valid_len = len(valid_loader)
