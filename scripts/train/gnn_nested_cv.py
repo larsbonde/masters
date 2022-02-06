@@ -19,6 +19,7 @@ from modules.utils import *
 from modules.models import *
 from modules.gnn_utils import *
 
+torch.multiprocessing.set_start_method("spawn")
 np.random.seed(0)
 torch.manual_seed(0)
 
