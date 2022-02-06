@@ -167,6 +167,7 @@ for outer_train_idx, test_idx in zip(outer_train_partitions, test_partitions):
     best_inner_fold_models = list()
 
     inner_metadata = metadata.iloc[outer_train_idx].copy(deep=True)
+    inner_metadata = inner_metadata.sample(frac=1)  # shuffle rows to get even partitions
     inner_partitions = partition_clusters(inner_metadata, cluster_file)
     inner_train_partitions, inner_valid_partitions = join_partitions(inner_partitions)
 
