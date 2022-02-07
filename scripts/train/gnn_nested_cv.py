@@ -96,7 +96,7 @@ loss_paths = touch_output_files(save_dir, "loss", n_splits)
 state_paths = touch_output_files(save_dir, "state", n_splits)
 pred_paths = touch_output_files(save_dir, "pred", n_splits)
 
-partitions = partition_clusters(cluster_path, n_splits)
+partitions = partition_clusters(metadata, cluster_path, n_splits)
 
 if args.drop_swapped:
     filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
