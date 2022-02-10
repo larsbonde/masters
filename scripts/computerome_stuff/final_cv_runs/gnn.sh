@@ -11,22 +11,22 @@
 #PBS -m abe
 ###
 ### Compute resources, here 1 core on 1 node
-#PBS -l nodes=1:ppn=14
+#PBS -l nodes=1:ppn=4:gpus=1
 ###
 ### Required RAM in GB
-#PBS -l mem=50GB
+#PBS -l mem=100GB
 ###
 ### How long (max) will the job take, here 24 hours
-#PBS -l walltime=10:00:00
+#PBS -l walltime=300:00:00
 ###
 ### Output files - not required to be specified
 ### Comment out the next 2 lines to use the job id instead in the file names
-#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/extract_cdr_pep.log
-#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/extract_cdr_pep_err.log
+#PBS -e /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_err_gnn_nested_cv.log
+#PBS -o /home/projects/ht3_aim/people/sebdel/masters/scripts/computerome_stuff/train_run_gnn_nested_cv.log
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N extract_cdr_pep
+#PBS -N cv_ps
 ###
 ### More qsub options can be added here
 
@@ -40,8 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-#python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s esm
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s esm
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s esm_ps
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s blosum
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_energy.py
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/gnn_nested_cv.py -m default -c cdr3b

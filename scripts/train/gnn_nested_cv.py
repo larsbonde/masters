@@ -113,6 +113,11 @@ for i in range(n_splits):
     best_inner_fold_models = list()
 
     test_idx = partitions[i]
+    # drop swapped from test partition
+    filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
+    for k in range(n_splits):
+            test_idx = [k for k in test_idx if k not in filtered_indices]
+
     outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
     inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
     for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
@@ -166,5 +171,3 @@ for i in range(n_splits):
     
     pred, true = gnn_predict(net, dataset, test_idx, device)     
     torch.save({"y_pred": pred, "y_true": true}, pred_paths[i])
-    
-    i += 1

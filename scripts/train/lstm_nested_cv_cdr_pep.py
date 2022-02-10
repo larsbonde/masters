@@ -41,7 +41,7 @@ model_dir = data_root / "raw" / "tcrpmhc"
 if args.mode == "ps":
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 128
@@ -51,7 +51,7 @@ if args.mode == "ps":
 if args.mode == "esm":
     data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280
@@ -61,7 +61,7 @@ if args.mode == "esm":
 if args.mode == "esm_ps":
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128
@@ -72,7 +72,7 @@ if args.mode == "ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
     targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_foldx_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_foldx_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 128
@@ -83,7 +83,7 @@ if args.mode == "esm_ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_foldx_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_foldx_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128
@@ -94,7 +94,7 @@ if args.mode == "ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_rosetta_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_rosetta_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 128
@@ -105,7 +105,7 @@ if args.mode == "esm_ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_esm_ps_rosetta_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_rosetta_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128
@@ -115,7 +115,7 @@ if args.mode == "esm_ps_rosetta":
 if args.mode == "blosum":
     data = processed_dir / "blosum_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_blosum_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_blosum_80_cv"
     epochs = 250
     batch_size = 8
     embedding_dim = 21
@@ -126,7 +126,7 @@ if args.mode == "energy":
     model_dir = data_root / "raw" / "energy_terms_mock"
     data = processed_dir / "energy_terms_pos"
     targets = processed_dir / "energy_terms_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_energy_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_energy_80_cv"
     batch_size = 8
     embedding_dim = 128
     hidden_dim = 128
@@ -159,10 +159,11 @@ dataset = LSTMDataset(
 )
 
 # general params
-learning_rate = 5e-5
-lr_decay = 0.995
+epochs = 100
+learning_rate = 1e-4
+lr_decay = 0.99
 w_decay = 1e-3
-dropout = 0.6  # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
+dropout = 0.6    # test scheduled dropout. Can set droput using net.layer.dropout = 0.x https://arxiv.org/pdf/1703.06229.pdf
 
 # touch files to ensure output
 n_splits = 5
@@ -196,7 +197,7 @@ for i in range(n_splits):
     outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
     inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
     for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
-        net = QuadLSTM(
+        net = TripleLSTM(
             embedding_dim=embedding_dim, 
             hidden_dim=hidden_dim, 
             num_layers=num_layers, 

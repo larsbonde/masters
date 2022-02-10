@@ -41,3 +41,5 @@ eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
 python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/pos_encode_energy.py
+
+

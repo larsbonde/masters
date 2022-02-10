@@ -128,7 +128,7 @@ if args.mode == "energy":
 
 if args.data_subset:
     model_subset_dir = data_root / "raw" / "foldx_repair"
-    out_dir = out_dir.parent / str(out_dir.name +  "lstm_ps_repaired_model_subset")
+    out_dir = out_dir.parent / str(out_dir.name +  "_repaired_model_subset")
 
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")

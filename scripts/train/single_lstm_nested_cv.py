@@ -26,7 +26,7 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode")
 parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
-parser.add_argument("-c", "--cluster", default="cdr3b")
+parser.add_argument("-c", "--cluster", default="cdr3b_low_cov")
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -41,7 +41,7 @@ model_dir = data_root / "raw" / "tcrpmhc"
 if args.mode == "ps":
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_ps_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_ps_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 128 + 4
@@ -51,7 +51,7 @@ if args.mode == "ps":
 if args.mode == "esm":
     data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_esm_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 4
@@ -61,7 +61,7 @@ if args.mode == "esm":
 if args.mode == "esm_ps":
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_esm_ps_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm_ps_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128 + 4
@@ -72,7 +72,7 @@ if args.mode == "ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data = processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_ps_foldx_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_ps_foldx_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 128 + 4
@@ -83,7 +83,7 @@ if args.mode == "esm_ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_esm_ps_foldx_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm_ps_foldx_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128 + 4
@@ -94,7 +94,7 @@ if args.mode == "ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_ps_rosetta_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_ps_rosetta_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 128 + 4
@@ -105,7 +105,7 @@ if args.mode == "esm_ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_esm_ps_rosetta_80_cv"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm_ps_rosetta_80_cv"
     epochs = 150
     batch_size = 8
     embedding_dim = 1280 + 128 + 4
@@ -115,8 +115,8 @@ if args.mode == "esm_ps_rosetta":
 if args.mode == "blosum":
     data = processed_dir / "blosum_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_single_blosum_80_cv"
-    epochs = 250
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_blosum_80_cv"
+    epochs = 200
     batch_size = 8
     embedding_dim = 21 + 4
     hidden_dim = 128 
@@ -127,6 +127,7 @@ if args.mode == "energy":
     data = processed_dir / "energy_terms_pos"
     targets = processed_dir / "energy_terms_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "single_lstm_energy_80_cv"
+    epochs = 150
     batch_size = 8
     embedding_dim = 135 + 4 
     hidden_dim = 256
@@ -188,6 +189,11 @@ for i in range(n_splits):
     best_inner_fold_models = list()
 
     test_idx = partitions[i]
+    # drop swapped from test partition
+    filtered_indices = list(metadata[metadata["origin"] == "swapped"].index)
+    for k in range(n_splits):
+            test_idx = [k for k in test_idx if k not in filtered_indices]
+
     outer_train_folds = [partitions[j] for j in range(n_splits) if j != i]
     inner_train_partitions, inner_valid_partitions = join_partitions(outer_train_folds)
     for train_idx, valid_idx in zip(inner_train_partitions, inner_valid_partitions):
