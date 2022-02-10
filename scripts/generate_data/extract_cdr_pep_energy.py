@@ -87,7 +87,7 @@ for i, record in enumerate(SeqIO.parse(full_seq_path, "fasta")):
     if seq_id in metadata["#ID"]:
         print(j)
         print(i)
-        print(metadata_row.iloc[j]["#ID"])
+        print(metadata.iloc[j]["#ID"])
         data = dataset_pre[i]
         x = dataset_emb[j][0]
         metadata_row = metadata.iloc[j]
