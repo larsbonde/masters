@@ -51,8 +51,8 @@ metadata = pd.read_csv(metadata_path)
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
 metadata = metadata.reset_index(drop=True)
 
-raw_files = np.array(metadata["path"].copy(deep=True))
-targets = np.array(metadata["binder"].copy(deep=True))
+raw_files = np.array(metadata["path"])
+targets = np.array(metadata["binder"])
 
 dataset_pre = ProteinDataset(
     processed_dir / "proteinsolver_preprocess", 
@@ -68,9 +68,9 @@ path_df = pd.DataFrame({'#ID': join_key})
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to energy/raw overlap
 
 dataset_emb = LSTMDataset(
-    device=device,
     data_dir=processed_dir / "energy_terms_pos", 
-    annotations_path=processed_dir / "energy_terms_pos" / "targets.pt"
+    annotations_path=processed_dir / "energy_terms_pos" / "targets.pt",
+    device=device,
 )
 
 # Create GNN embeddings (gnn.forward_without_last_layer=128 dim, gnn.forward=20 dim)
@@ -78,9 +78,6 @@ out_dir = processed_dir / "energy_terms_cdr_pep_only"
 out_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
 
 chain_keys = np.array(["P", "M", "A", "B"])
-
-cdr3a_indices = list()
-cdr3b_indices = list()
 
 j = 0
 for i, record in enumerate(SeqIO.parse(full_seq_path, "fasta")):

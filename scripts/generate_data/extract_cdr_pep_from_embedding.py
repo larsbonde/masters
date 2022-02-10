@@ -85,18 +85,15 @@ dataset_pre = ProteinDataset(
 )
 
 dataset_emb = LSTMDataset(
-    device=device,
     data_dir=data,
-    annotations_path=targets
+    annotations_path=targets,
+    device=device
 )
 
 # Create GNN embeddings (gnn.forward_without_last_layer=128 dim, gnn.forward=20 dim)
 out_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
 
 chain_keys = np.array(["P", "M", "A", "B"])
-
-cdr3a_indices = list()
-cdr3b_indices = list()
 
 for i, record in enumerate(SeqIO.parse(full_seq_path, "fasta")):
     seq = np.array(list(record.seq))
