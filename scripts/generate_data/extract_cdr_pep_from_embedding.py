@@ -42,7 +42,7 @@ metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 model_dir = data_root / "raw" / "tcrpmhc"
-full_seq_path = root / "esm_1b_stuff" / "full_seqs.fsa"
+full_seq_path = data_root / "full_seqs.fsa"
 
 if args.source == "ps":
     data = processed_dir / "proteinsolver_embeddings_pos"

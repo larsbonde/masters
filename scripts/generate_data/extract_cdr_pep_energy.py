@@ -37,7 +37,7 @@ data_root = root / "neat_data"
 metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed"
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
-full_seq_path = root / "esm_1b_stuff" / "full_seqs.fsa"
+full_seq_path = data_root / "full_seqs.fsa"
 
 model_dir = data_root / "raw" / "tcrpmhc"
 energy_model_dir = data_root / "raw" / "energy_terms_mock"
