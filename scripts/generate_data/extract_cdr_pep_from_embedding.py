@@ -56,7 +56,7 @@ if args.source == "esm":
 
 if args.source == "esm_ps":
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
-    targets = processed_dir / "proteinsolver_esm_embeddings_pos" / "targets.pt"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = processed_dir / "proteinsolver_esm_embeddings_cdr_pep_only"
 
 if args.source == "blosum":

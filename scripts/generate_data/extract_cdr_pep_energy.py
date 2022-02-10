@@ -81,9 +81,13 @@ chain_keys = np.array(["P", "M", "A", "B"])
 
 j = 0
 for i, record in enumerate(SeqIO.parse(full_seq_path, "fasta")):
+    print("-------")
     seq = np.array(list(record.seq))
     seq_id = int(record.id)
     if seq_id in metadata["#ID"]:
+        print(j)
+        print(i)
+        print(metadata_row.iloc[j]["#ID"])
         data = dataset_pre[i]
         x = dataset_emb[j][0]
         metadata_row = metadata.iloc[j]
