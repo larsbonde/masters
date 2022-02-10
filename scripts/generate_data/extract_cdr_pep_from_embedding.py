@@ -74,12 +74,12 @@ metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # fil
 metadata = metadata.reset_index(drop=True)
 
 raw_files = np.array(metadata["path"])
-targets = np.array(metadata["binder"])
+ps_targets = np.array(metadata["binder"])
 
 dataset_pre = ProteinDataset(
     processed_dir / "proteinsolver_preprocess", 
     raw_files, 
-    targets, 
+    ps_targets, 
     cores=20, 
     overwrite=False
 )
