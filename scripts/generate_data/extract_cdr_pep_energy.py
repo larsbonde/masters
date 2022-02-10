@@ -51,8 +51,8 @@ metadata = pd.read_csv(metadata_path)
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
 metadata = metadata.reset_index(drop=True)
 
-raw_files = np.array(metadata["path"]copy(deep=True))
-targets = np.array(metadata["binder"]copy(deep=True))
+raw_files = np.array(metadata["path"].copy(deep=True))
+targets = np.array(metadata["binder"].copy(deep=True))
 
 dataset_pre = ProteinDataset(
     processed_dir / "proteinsolver_preprocess", 

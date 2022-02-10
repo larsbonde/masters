@@ -40,7 +40,7 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-#python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s esm
+#python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s ps
 python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s esm
 python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s esm_ps
 python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/generate_data/extract_cdr_pep_from_embedding.py -s blosum
