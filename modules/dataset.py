@@ -29,7 +29,7 @@ class LSTMDataset(torch.utils.data.Dataset):
         return len(self.annotations)
 
     def __getitem__(self, idx):
-        x = torch.load(f"{self.data_dir}/data_{idx}.pt", map_location=self.device)
+        x = torch.load(f"{self.data_dir}/data_{idx}.pt")
         y = self.annotations[idx]
         return x, y
 

@@ -32,8 +32,8 @@ def gnn_train(
         train_sampler = BatchSampler(SubsetRandomSampler(train_idx), batch_size=batch_size, drop_last=False)
         valid_sampler = BatchSampler(SubsetRandomSampler(valid_idx), batch_size=1, drop_last=False)
         
-        train_loader = torch_geometric.loader.DataLoader(dataset=dataset, batch_sampler=train_sampler)
-        valid_loader = torch_geometric.loader.DataLoader(dataset=dataset, batch_sampler=valid_sampler)
+        train_loader = torch_geometric.loader.DataLoader(dataset=dataset, batch_sampler=train_sampler, pin_memory=True)
+        valid_loader = torch_geometric.loader.DataLoader(dataset=dataset, batch_sampler=valid_sampler, pin_memory=True)
 
         train_len = len(train_loader)
         valid_len = len(valid_loader)
