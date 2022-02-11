@@ -39,7 +39,7 @@ state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 model_dir = data_root / "raw" / "tcrpmhc"
 
 if args.mode == "ps":
-    data = processed_dir / "proteinsolver_embeddings_pos"
+    data = processed_dir / "proteinsolver_embeddings_cdr_pep_only"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_80_cv"
     epochs = 150
@@ -49,7 +49,7 @@ if args.mode == "ps":
     num_layers = 2 
 
 if args.mode == "esm":
-    data = processed_dir / "esm_embeddings_pos"
+    data = processed_dir / "esm_embeddings_cdr_pep_only"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_80_cv"
     epochs = 150
@@ -59,7 +59,7 @@ if args.mode == "esm":
     num_layers = 2
 
 if args.mode == "esm_ps":
-    data = processed_dir / "proteinsolver_esm_embeddings_pos"
+    data = processed_dir / "proteinsolver_esm_embeddings_cdr_pep_only"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_80_cv"
     epochs = 150
@@ -113,7 +113,7 @@ if args.mode == "esm_ps_rosetta":
     num_layers = 2
 
 if args.mode == "blosum":
-    data = processed_dir / "blosum_embeddings_pos"
+    data = processed_dir / "blosum_embeddings_cdr_pep_only"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_blosum_80_cv"
     epochs = 250
@@ -124,7 +124,7 @@ if args.mode == "blosum":
 
 if args.mode == "energy":
     model_dir = data_root / "raw" / "energy_terms_mock"
-    data = processed_dir / "energy_terms_pos"
+    data = processed_dir / "energy_terms_cdr_pep_only"
     targets = processed_dir / "energy_terms_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_energy_80_cv"
     batch_size = 8
