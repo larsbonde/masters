@@ -39,8 +39,9 @@ module load tools
 module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
-mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3b_seqs.fsa /home/people/sebdel/ht3_aim/masters/data/neat_data/clusterRes_cdr3b_raw_idx tmp --min-seq-id 0.5 -c 0.8 --cov-mode 1
-mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3b_seqs.fsa /home/people/sebdel/ht3_aim/masters/data/neat_data/clusterRes_cdr3b_raw_idx_low_cov tmp --min-seq-id 0.5 -c 0.5 --cov-mode 1
+mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3b_seqs.fsa /home/people/sebdel/ht3_aim/masters/data/neat_data/clusterRes_cdr3b_80_raw_idx tmp --min-seq-id 0.8 -c 0.8 --cov-mode 1
+mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3b_seqs.fsa /home/people/sebdel/ht3_aim/masters/data/neat_data/clusterRes_cdr3b_80_raw_idx_low_cov tmp --min-seq-id 0.8 -c 0.25 --cov-mode 1
+#mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3b_seqs.fsa /home/people/sebdel/ht3_aim/masters/data/neat_data/clusterRes_cdr3b_raw_idx_low_cov tmp --min-seq-id 0.5 -c 0.5 --cov-mode 1
 
 #mmseqs easy-cluster /home/people/sebdel/ht3_aim/masters/data/neat_data/cdr3b_seqs.fsa /home/people/sebdel/ht3_aim/masters/data/neat_data/clusterRes_cdr3b_test_cov_95 tmp --min-seq-id 0.8 -c 0.95 --cov-mode 1
 
