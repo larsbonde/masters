@@ -25,6 +25,7 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
 parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
+parser.add_argument("-r", "--data_subset", action="store_true", default=False)
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -35,17 +36,106 @@ metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 model_dir = data_root / "raw" / "tcrpmhc"
-cluster_path = data_root / "clusterRes_cdr3b_50_cluster.tsv"
+cluster_path = data_root / "clusterRes_cdr3b_50_raw_idx_cluster.tsv"
 
 if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_embeddings_cdr_pep_only"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_cdr_pep_only"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps"
     batch_size = 8
     embedding_dim = 128
     hidden_dim = 128
     num_layers = 2 
+
+if args.mode == "esm":
+    data = processed_dir / "esm_embeddings_cdr_pep_only"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm"
+    epochs = 150
+    batch_size = 8
+    embedding_dim = 1280
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "esm_ps":
+    data = processed_dir / "proteinsolver_esm_embeddings_cdr_pep_only"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps"
+    epochs = 150
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "ps_foldx":
+    model_dir = data_root / "raw" / "foldx_repair"
+    data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
+    targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_foldx"
+    epochs = 150
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
+if args.mode == "esm_ps_foldx":
+    model_dir = data_root / "raw" / "foldx_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_foldx"
+    epochs = 150
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "ps_rosetta":
+    model_dir = data_root / "raw" / "rosetta_repair"
+    data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_rosetta"
+    epochs = 150
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "esm_ps_rosetta":
+    model_dir = data_root / "raw" / "rosetta_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
+    targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_rosetta"
+    epochs = 150
+    batch_size = 8
+    embedding_dim = 1280 + 128
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "blosum":
+    data = processed_dir / "blosum_embeddings_cdr_pep_only"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_blosum"
+    epochs = 250
+    batch_size = 8
+    embedding_dim = 21
+    hidden_dim = 128 
+    num_layers = 2
+
+if args.mode == "energy":
+    model_dir = data_root / "raw" / "energy_terms_mock"
+    data = processed_dir / "energy_terms_cdr_pep_only"
+    targets = processed_dir / "energy_terms_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_energy"
+    epochs = 150
+    batch_size = 8
+    embedding_dim = 128
+    hidden_dim = 128
+    num_layers = 2 
+
+if args.data_subset:
+    model_subset_dir = data_root / "raw" / "foldx_repair"
+    out_dir = out_dir.parent / str(out_dir.name +  "_repaired_model_subset")
 
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
@@ -59,6 +149,11 @@ metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # fil
 metadata = metadata.reset_index(drop=True)
 metadata["merged_chains"] = metadata["CDR3a"] + metadata["CDR3b"]
 unique_peptides = metadata["peptide"].unique()
+
+if args.data_subset:
+    paths_subset = list(model_subset_dir.glob("*"))
+    path_df_subset = pd.DataFrame({'#ID': [int(x.name.split("_")[0]) for x in paths_subset]})
+    metadata = metadata.join(path_df_subset.set_index("#ID"), on="#ID", how="inner")
 
 loo_train_partitions, loo_test_partitions, loo_valid_partitions, unique_peptides = generate_3_loo_partitions(
     metadata, 

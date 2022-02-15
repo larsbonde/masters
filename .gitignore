@@ -2,6 +2,7 @@
 data/models/*
 data/train/*
 data/test/*
+data/results*
 data/esm_1b_stuff/*
 data/210916_TCRpMHCmodels/*
 data/embedding_verification/*
@@ -15,9 +16,9 @@ data/results_1/*
 data/results_2/*
 data/state_files/old_2/*
 data/state_files/old_2
-data/state_files/results_1
+data/state_files/results*
 data/state_files/results_2
-
+*.png
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
