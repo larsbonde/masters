@@ -61,7 +61,7 @@ def generate_loo_partitions(metadata, drop_swapped=False):
 
 def load_cluster_file(cluster_path):
     clusters = dict()
-    with open(cluster_path) as infile:
+    with open(cluster_path, "r") as infile:
         for line in infile:
             line = line.strip()
             line = line.split("\t")

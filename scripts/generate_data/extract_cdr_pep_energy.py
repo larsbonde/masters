@@ -51,6 +51,8 @@ metadata = pd.read_csv(metadata_path)
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to non-missing data
 metadata = metadata.reset_index(drop=True)
 
+full_set_map = {k: v for k, v in zip(metadata["#ID"], metadata.index)}
+
 raw_files = np.array(metadata["path"])
 ps_targets = np.array(metadata["binder"])
 
@@ -66,6 +68,9 @@ energy_paths = list(energy_model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in energy_paths]
 path_df = pd.DataFrame({'#ID': join_key})
 metadata = metadata.join(path_df.set_index("#ID"), on="#ID", how="inner")  # filter to energy/raw overlap
+metadata = metadata.reset_index(drop=True)
+
+sub_set_map = {k: v for k, v in zip(metadata["#ID"], metadata.index)}
 
 dataset_emb = LSTMDataset(
     data_dir=processed_dir / "energy_terms_pos", 
@@ -79,21 +84,14 @@ out_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
 
 chain_keys = np.array(["P", "M", "A", "B"])
 
-j = 0
 for i, record in enumerate(SeqIO.parse(full_seq_path, "fasta")):
-    print("-------")
     seq = np.array(list(record.seq))
     seq_id = int(record.id)
-    if seq_id in metadata["#ID"]:
-        print(j)
-        print(i)
-        print(metadata.iloc[j]["#ID"].index)
-        print(seq_id)
-        print(metadata.iloc[j]["#ID"])
-        data = dataset_pre[i]
+    if seq_id in set(metadata["#ID"]):
+        data = dataset_pre[full_set_map[seq_id]] 
+        j = sub_set_map[seq_id]
         x = dataset_emb[j][0]
         metadata_row = metadata.iloc[j]
-        
         new_data = list()
         for cdr3, tcr in [["CDR3a", "A"], ["CDR3b", "B"]]:
             # get TCR and CDR3 seq
@@ -115,4 +113,3 @@ for i, record in enumerate(SeqIO.parse(full_seq_path, "fasta")):
         new_data = torch.vstack(new_data)
         torch.save(new_data, out_dir / f"data_{j}.pt")
 
-        j += 1
