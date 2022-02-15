@@ -129,7 +129,7 @@ if args.mode == "energy":
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_energy_80_cv"
     epochs = 150
     batch_size = 8
-    embedding_dim = 128
+    embedding_dim = 135
     hidden_dim = 128
     num_layers = 2 
 
