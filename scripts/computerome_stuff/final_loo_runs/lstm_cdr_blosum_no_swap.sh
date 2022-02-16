@@ -26,7 +26,7 @@
 ###
 ### Job name - not required to be specified
 ### It is often easier just to use the job id instead for recognition
-#PBS -N cv_sl_blosum
+#PBS -N loo_tl_blosum_ns
 ###
 ### More qsub options can be added here
 
@@ -40,4 +40,4 @@ module load miniconda3/4.10.3
 eval "$(command conda 'shell.bash' 'hook' 2> /dev/null)"
 conda activate /home/projects/ht3_aim/people/sebdel/envs/envs/proteinsolver/
 
-python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/single_lstm_nested_cv.py -m blosum -c cdr3b_low_cov
+python3 /home/projects/ht3_aim/people/sebdel/masters/scripts/train/lstm_loo_cdr_pep.py -m blosum  -s
