@@ -70,7 +70,7 @@ if args.mode == "esm_ps":
 
 if args.mode == "ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
-    data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
+    data=processed_dir / "proteinsolver_embeddings_cdr_pep_only_foldx"
     targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_foldx"
     epochs = 150
@@ -81,7 +81,7 @@ if args.mode == "ps_foldx":
 
 if args.mode == "esm_ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
-    data = processed_dir / "proteinsolver_esm_embeddings_pos_foldx_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_cdr_pep_only_foldx"
     targets = processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_foldx"
     epochs = 150
@@ -92,7 +92,7 @@ if args.mode == "esm_ps_foldx":
 
 if args.mode == "ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
-    data = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair"
+    data = processed_dir / "proteinsolver_embeddings_cdr_pep_only_rosetta"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_ps_rosetta"
     epochs = 150
@@ -103,7 +103,7 @@ if args.mode == "ps_rosetta":
 
 if args.mode == "esm_ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
-    data = processed_dir / "proteinsolver_esm_embeddings_pos_rosetta_repair"
+    data = processed_dir / "proteinsolver_esm_embeddings_cdr_pep_only_rosetta"
     targets = processed_dir / "proteinsolver_embeddings_pos_rosetta_repair" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "cdr_lstm_esm_ps_rosetta"
     epochs = 150
