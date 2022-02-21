@@ -48,24 +48,28 @@ if args.source == "ps_foldx":
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = processed_dir / "proteinsolver_embeddings_cdr_pep_only_foldx"
+    preprocess_dir = processed_dir / "proteinsolver_preprocess_foldx_repair"
 
 if args.source == "esm_ps_foldx":
     model_dir = data_root / "raw" / "foldx_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = processed_dir / "proteinsolver_esm_embeddings_cdr_pep_only_foldx"
+    preprocess_dir = processed_dir / "proteinsolver_preprocess_foldx_repair"
 
 if args.source == "ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = processed_dir / "proteinsolver_embeddings_cdr_pep_only_rosetta"
+    preprocess_dir = processed_dir / "proteinsolver_preprocess_rosetta_repair"
 
 if args.source == "esm_ps_rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = processed_dir / "proteinsolver_esm_embeddings_cdr_pep_only_rosetta"
+    preprocess_dir = processed_dir / "proteinsolver_preprocess_rosetta_repair"
 
 # Get metadata
 paths = list(model_dir.glob("*"))
@@ -80,7 +84,7 @@ raw_files = np.array(metadata["path"])
 ps_targets = np.array(metadata["binder"])
 
 dataset_pre = ProteinDataset(
-    processed_dir / "proteinsolver_preprocess", 
+    preprocess_dir, 
     raw_files, 
     ps_targets, 
     cores=20, 
