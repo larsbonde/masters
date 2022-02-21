@@ -99,7 +99,8 @@ chain_keys = np.array(["P", "M", "A", "B"])
 
 metadata_id_set = set(metadata["#ID"])
 for record in SeqIO.parse(full_seq_path, "fasta"):
-    if int(record.id) in metadata_id_set:
+    seq_id = int(record.id)
+    if seq_id in metadata_id_set:
         i = metadata[metadata["#ID"] == seq_id].index[0]
         seq = np.array(list(record.seq))
         data = dataset_pre[i]
