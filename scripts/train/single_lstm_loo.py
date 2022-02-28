@@ -35,25 +35,54 @@ metadata_path = data_root / "metadata.csv"
 processed_dir = data_root / "processed" 
 state_file = root / "state_files" / "e53-s1952148-d93703104.state"
 model_dir = data_root / "raw" / "tcrpmhc"
-cluster_path = data_root / "clusterRes_cdr3b_50_cluster.tsv"
+cluster_path = data_root / "clusterRes_cdr3b_50_raw_idx_cluster.tsv"
 
 if args.mode == "ps":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_single"
-    batch_size = 8
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_ps"
+    batch_size = 32
     embedding_dim = 128 + 4
+    hidden_dim = 256
+    num_layers = 2 
+
+if args.mode == "esm":
+    model_dir = data_root / "raw" / "tcrpmhc"
+    data = processed_dir / "esm_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "sinle_lstm_esm"
+    batch_size = 32
+    embedding_dim = 1280 + 4
     hidden_dim = 256
     num_layers = 2
 
-if args.mode == "ps_foldx":
-    model_dir = data_root / "raw" / "foldx_repair"
-    data=processed_dir / "proteinsolver_embeddings_pos_foldx_repair"
-    targets=processed_dir / "proteinsolver_embeddings_pos_foldx_repair" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "lstm_ps_single_foldx"
+if args.mode == "esm_ps":
+    model_dir = data_root / "raw" / "tcrpmhc"
+    data = processed_dir / "proteinsolver_esm_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm_ps"
+    batch_size = 32
+    embedding_dim = 1280 + 128 + 4
+    hidden_dim = 256
+    num_layers = 2
+
+if args.mode == "blosum":
+    data = processed_dir / "blosum_embeddings_pos"
+    targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_blosum"
+    batch_size = 32
+    embedding_dim = 21 + 4
+    hidden_dim = 256
+    num_layers = 2
+
+if args.mode == "energy":
+    model_dir = data_root / "raw" / "energy_terms_mock"
+    data = processed_dir / "energy_terms_pos"
+    targets = processed_dir / "energy_terms_pos" / "targets.pt"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_energy"
     batch_size = 8
-    embedding_dim = 128 + 4
+    embedding_dim = 135 + 4
     hidden_dim = 256
     num_layers = 2 
 
