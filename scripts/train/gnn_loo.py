@@ -24,6 +24,8 @@ torch.manual_seed(0)
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mode", default="default")
 parser.add_argument("-s", "--drop_swapped", action="store_true", default=False)
+parser.add_argument("-r", "--data_subset", action="store_true", default=False)
+
 args = parser.parse_args()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -49,6 +51,10 @@ if args.mode == "rosetta":
     model_dir = data_root / "raw" / "rosetta_repair"
     proc_dir = processed_dir / "proteinsolver_preprocess_rosetta_repair"
     out_dir = root / "state_files" / "tcr_binding" / "proteinsolver_finetune_rosetta"
+
+if args.data_subset:
+    model_subset_dir = data_root / "raw" / "foldx_repair"
+    out_dir = out_dir.parent / str(out_dir.name +  "_repaired_model_subset")
 
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
