@@ -51,7 +51,7 @@ if args.mode == "esm":
     model_dir = data_root / "raw" / "tcrpmhc"
     data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
-    out_dir = root / "state_files" / "tcr_binding" / "sinle_lstm_esm"
+    out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm"
     batch_size = 32
     embedding_dim = 1280 + 4
     hidden_dim = 256

@@ -42,7 +42,7 @@ if args.mode == "ps":
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "lstm_ps"
-    batch_size = 8
+    batch_size = 32
     embedding_dim = 128
     hidden_dim = 128
     num_layers = 2 
