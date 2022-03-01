@@ -42,7 +42,7 @@ if args.mode == "ps":
     data = processed_dir / "proteinsolver_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "single_lstm_ps"
-    batch_size = 32
+    batch_size = 8
     embedding_dim = 128 + 4
     hidden_dim = 256
     num_layers = 2 
@@ -52,7 +52,7 @@ if args.mode == "esm":
     data = processed_dir / "esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm"
-    batch_size = 32
+    batch_size = 8
     embedding_dim = 1280 + 4
     hidden_dim = 256
     num_layers = 2
@@ -62,7 +62,7 @@ if args.mode == "esm_ps":
     data = processed_dir / "proteinsolver_esm_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "single_lstm_esm_ps"
-    batch_size = 32
+    batch_size = 8
     embedding_dim = 1280 + 128 + 4
     hidden_dim = 256
     num_layers = 2
@@ -71,7 +71,7 @@ if args.mode == "blosum":
     data = processed_dir / "blosum_embeddings_pos"
     targets = processed_dir / "proteinsolver_embeddings_pos" / "targets.pt"
     out_dir = root / "state_files" / "tcr_binding" / "single_lstm_blosum"
-    batch_size = 32
+    batch_size = 8
     embedding_dim = 21 + 4
     hidden_dim = 256
     num_layers = 2
