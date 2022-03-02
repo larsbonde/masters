@@ -93,6 +93,8 @@ if args.data_subset:
 if args.drop_swapped:
     out_dir = out_dir.parent / str(out_dir.name + "_no_swapped")
 
+hidden_dim = 128
+
 paths = list(model_dir.glob("*"))
 join_key = [int(x.name.split("_")[0]) for x in paths]
 path_df = pd.DataFrame({'#ID': join_key, 'path': paths})
